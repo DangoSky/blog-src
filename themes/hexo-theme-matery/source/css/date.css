@@ -1,0 +1,63 @@
+*{
+	margin: 0;
+	padding: 0;
+}
+aname
+{
+	color: rgb(0, 0, 0);
+	display: block;
+	line-height: 1.5;
+}
+#box{
+	background-image: url("/image/date.png");
+	width: 350px;
+	height: 348px;
+	position: relative;
+	margin: 0 auto;
+}
+
+#inTop{
+	position: absolute;
+	top: 87px;
+	left: 89px;
+	font-size: 48px;
+	padding-top: 30px;
+	padding-bottom: 20px;
+}
+#inBottom{
+	position: absolute;
+	top: 125px;
+	left: 70px;
+	font-size: 96px;
+	padding: 50px;
+}
+#weekend{
+	position: absolute;
+	top: 38px;
+	left: 133px;
+	font-size: 28.8px;
+}
+#clock{
+		width: 350px;
+		height: 350px;
+		margin: 0 auto;
+		background: url(/image/clock.jpg) no-repeat;
+		position: relative;
+	}
+#hour{
+	background: url("/image/hour.png") no-repeat;
+}
+#minute{
+	background: url("/image/minute.png") no-repeat;
+}
+#second{
+	background: url("/image/second.png") no-repeat;
+}
+#hour, #minute, #second{
+	position: absolute;
+	width: 18px;
+	height: 360px;
+	left: 50%;
+	top: 0;
+	margin-left: -10px;
+}
