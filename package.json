@@ -3,7 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "hexo": {
-    "version": "3.7.1"
+    "version": "3.9.0"
+  },
+  "scripts": {
+    "push": "bash deploy.sh"
   },
   "dependencies": {
     "gulp": "^3.9.1",
