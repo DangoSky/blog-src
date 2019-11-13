@@ -1,23 +1,27 @@
 [
   {
-    "avatar": "http://dangosky.com/blog/lightyears.jpg",
     "name": "Lightyears",
-    "introduction": "一位准全栈工程师的生活日记",
     "url": "https://blog.qfstudio.net/",
     "title": "折跃"
   }, 
   {
-    "avatar": "http://dangosky.com/blog/user.jpg",
     "name": "Semon0x29a",
-    "introduction": "An acmer",
     "url": "http://semon0x29a.cn/",
     "title": "折跃"
   }, 
   {
-    "avatar": "http://dangosky.com/blog/Caproner.jpg",
     "name": "Caproner",
-    "introduction": "一位ACM金牌选手的生活日记",
     "url": "https://caproner.github.io/",
+    "title": "折跃"
+  }, 
+  {
+    "name": "勝者の冬",
+    "url": "https://blog.winnerwinter.com/",
+    "title": "折跃"
+  }, 
+  {
+    "name": "樱花庄的白猫",
+    "url": "https://2heng.xin/",
     "title": "折跃"
   }
 ]

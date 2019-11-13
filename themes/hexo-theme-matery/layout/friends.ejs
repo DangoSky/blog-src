@@ -33,7 +33,6 @@
     .frind-ship .title h1 {
         line-height: 0.8rem;
         padding-bottom: 16px;
-        border-bottom: 2px solid #fff;
     }
 
     .friend-button {
@@ -172,6 +171,9 @@
     .frind-card10 {
         background-image: linear-gradient(to top, #f77062 0%, #fe5196 100%);
     }
+    article a:hover {
+        color: transparent;
+    }
 </style>
 
 <main class="content">
@@ -183,23 +185,19 @@
                 <% for (var i = 0, len = friends.length; i < len; i++) { %>
                 <% var friend = friends[i]; %>
                 <div class=" col s12 m6 l4" data-aos="zoom-in-up">
+                    <a href="<%- friend.url %>" target="_blank" >
                     <div class="card frind-card<%- ((i % 10) +1) %>">
                         <div class="frind-ship">
-                            <div class="title">
-                                <img src="<%- friend.avatar %>" alt="img">
-                                <div>
-                                    <h1 class="friend-name"><%- friend.name %></h1>
-                                    <p><%- friend.introduction %></p>
+                                <div class="title">
+                                    <div>
+                                        <h1 class="friend-name"><%- friend.name %></h1>
+                                        <p><%- friend.introduction %></p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="friend-button">
-                                <a href="<%- friend.url %>" target="_blank" 
-                                    class="button button-glow button-rounded button-caution">
-                                    <%- friend.title %>
-                                </a>
+
                             </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
                 <% } %>
             </div>

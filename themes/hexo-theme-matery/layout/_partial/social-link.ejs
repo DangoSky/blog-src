@@ -16,3 +16,9 @@
     <i class="fa fa-github"></i>
 </a>
 <% } %>
+
+<% if (config.feed && config.feed.path == 'atom.xml') { %>
+    <a href="http://notes.dangosky.com/" class="tooltipped" target="_blank" data-tooltip="浏览我的笔记" data-position="top" data-delay="50">
+     <i class="fa fa-book"></i>
+ </a>
+ <% } %>
