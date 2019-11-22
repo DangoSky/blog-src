@@ -56,10 +56,22 @@
                     <a href="<%- url_for(post.path) %>">
                         <div class="card-image">
                             <% if (post.img) { %>
-                            <img src="<%= post.img %>" class="responsive-img" alt="<%- post.title %>">
-                            <% } else { %>
+                                <!-- 使用指定的图片url -->
+                                <img src="<%= post.img %>" class="responsive-img" alt="<%- post.title %>">
+                            <% }
+                            else if(post.specialImg) { %>
+                                <!-- 使用指定的图片路径 -->
+                                <img src="<%- '/medias/specialImg/'+post.specialImg %>" class="responsive-img" alt="<%- post.title %>">                           
+                            <% }
+                            else if(post.changeRandomImg) { %>
+                                <!-- 修改为其他的随机图片 -->
+                                <img src="<%- '/medias/featureimages/'+post.changeRandomImg+'.jpg' %>" class="responsive-img" alt="<%- post.title %>">                           
+                            <% }
+                            else { %>
                             <%
+                                <!-- 采用默认的随机图片算法 -->
                                 var featureimg = '/medias/featureimages/0.jpg';
+                                debugger;
                                 var featureImages = theme.featureImages;
                                 if (!featureImages || featureImages.length == 0) {
                                     return featureimg;
@@ -69,7 +81,7 @@
                                 var num = Math.abs(hashCode(post.title) % len);
                                 featureimg = featureImages[num];
                             %>
-                            <img src="<%- featureimg %>" class="responsive-img" alt="<%- post.title %>">
+                                <img src="<%- featureimg %>" class="responsive-img" alt="<%- post.title %>">
                             <% } %>
                             <span class="card-title"><%- post.title %></span>
                         </div>

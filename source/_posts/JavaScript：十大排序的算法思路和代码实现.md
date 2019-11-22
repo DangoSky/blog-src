@@ -8,7 +8,7 @@ tags:
 categories: 算法
 summary: 简要总结十大排序的算法思想，并使用 JavaScript 实现。
 cover: true
-img: https://user-gold-cdn.xitu.io/2016/11/29/4abde1748817d7f35f2bf8b6a058aa40?imageView2/0/w/1280/h/960/format/webp/ignore-error/1
+specialImg: 1.jpeg
 ---
 &emsp;&emsp;本文内容包括：(双向)冒泡排序、选择排序、插入排序、快速排序(填坑和交换)、归并排序、桶排序、基数排序、计数排序(优化)、堆排序、希尔排序。大家可以[在这里测试代码](https://leetcode-cn.com/problems/sort-an-array/)。更多 `leetcode` 的 `JavaScript` 解法也可以在我的算法仓库中找到，欢迎查看~
 

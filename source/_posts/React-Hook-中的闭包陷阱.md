@@ -6,6 +6,7 @@ tags:
   - React
 categories: React
 summary: 从几个自带闭包的React Hook入手，回顾闭包的特性，并介绍几种避免获取旧的state的方法。
+specialImg: 10.png
 ---
 
 # React Hook 中的闭包问题

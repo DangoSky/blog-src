@@ -6,8 +6,8 @@ tags:
     - JavaScript    
 	  - Vue
 categories: Web Project
-img: http://p1.pstatp.com/large/pgc-image/1539560119468feb70b785e
 summary: 收官，对为期四十多天的仿iOS版网易云音乐开发的一点总结。
+specialImg: 6.jpeg
 ---
 # 前言
 &emsp;&emsp;使用vue全家桶开发这个仿网易云音乐进行实操。因所学有限，项目所包含的内容可能会比较简单，并没有涉及到服务器搭建以及webpack配置等，但整体的业务逻辑还是有的。(还是要多加学习啊，加油！)。

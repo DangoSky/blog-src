@@ -6,4 +6,3 @@ var1=`date`
 git add -A
 git commit -m "update on $var1"
 git push origin master
-b

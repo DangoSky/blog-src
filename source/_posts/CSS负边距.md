@@ -6,7 +6,7 @@ tags:
 	 - 前端基础
 categories: CSS
 summary: 标准盒模型和IE盒模型之间的差异，负margin对文档流中定位元素宽度和定位的影响及其应用。
-img: https://github.com/DangoSky/practices-for-web/blob/master/images/12.jpg?raw=true
+changeRandomImg: 16
 ---
 # 盒模型
 &emsp;&emsp;每一个HTML标签元素都是由四个部分组成的，分别是内容(content)、内边距(padding)、边框(border)、外边距(margin)。其中盒子的大小只由 content + padding + border 决定，margin影响的不是盒子大小，而是盒子占据的位置。这一部分比较简单，所以这里就不多做叙述了。

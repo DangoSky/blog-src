@@ -4,7 +4,7 @@ date: 2019-09-03 00:36:03
 tags: Git
 categories: Git
 summary: 整理一些常用的 Git 命令。
-img: https://raw.githubusercontent.com/DangoSky/practices-for-web/master/images/11.jpg
+specialImg: 8.png
 ---
 
 在头条实习的这八周里，刚开始没少因为我对 Git 掌握严重不足而挨 mentor 训过，所以在这里记录一些比较常用的 Git 操作。

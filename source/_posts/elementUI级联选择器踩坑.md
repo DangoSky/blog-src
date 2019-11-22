@@ -4,7 +4,6 @@ date: 2019-06-14 21:58:11
 tags: 踩坑指南
 categories: 踩坑指南
 summary: 由于 elementUI 级联选择器对所选择项的搜索是自上而下的，所以级联的每一项数据要唯一。
-img: https://github.com/DangoSky/practices-for-web/blob/master/images/8.jpg?raw=true
 ---
 
 # 发现问题

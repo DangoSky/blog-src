@@ -7,7 +7,7 @@ tags:
     - Vue
 categories: Web Project
 summary: Vue 实现一个拼图游戏。算是这个五一假期的学习成果吧，虽然原计划被搁置了。
-img: https://github.com/DangoSky/puzzle-game/blob/master/image/bg.jpg?raw=true
+specialImg: 4.jpg
 ---
 # 前言
 &emsp;&emsp;会做这个 **Puzzle Game**，还是应前几天 lightyears 的一次提议，模仿的是鹰脚网络首页左下角那个[拼图小游戏](https://www.hypergryph.com/#/)。那天晚上睡觉的时候在床上想了一下，大致 get 到了它内部实现的原理，于是就干脆动手实践一番，现在也顺道写一篇博客记录下实现思路和中间遇到的一些问题。

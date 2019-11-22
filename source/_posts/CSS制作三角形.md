@@ -4,7 +4,6 @@ date: 2018-12-25 11:20:41
 tags: CSS
 categories: CSS
 summary: CSS制作三角形的原理以及制作其他小图形。
-img: https://github.com/DangoSky/practices-for-web/blob/master/images/8.jpg?raw=true
 ---
 
 # 三角形

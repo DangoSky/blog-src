@@ -7,6 +7,7 @@ tags:
       - jQuery
 categories: Web Project 
 summary: 使用jQuery制作一个Web版的2048。
+specialImg: 7.jpg
 ---
 
 &emsp;&emsp;[这是一个到2048空间的传送门。](http://dangosky.com/2048/index.html)

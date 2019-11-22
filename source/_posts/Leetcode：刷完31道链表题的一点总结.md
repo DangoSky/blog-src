@@ -8,7 +8,7 @@ tags:
 categories: 数据结构
 summary: 刷完 Leetcode 的链表专题后，总结一些常用的解题思路。
 cover: true
-img: https://github.com/DangoSky/practices-for-web/blob/master/images/9.jpg?raw=true
+specialImg: 9.png
 ---
 # 前言
 
