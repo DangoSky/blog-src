@@ -11,14 +11,19 @@ var myprojects = theme.myProjects.data;
         <% Object.keys(myprojects).forEach(function(project) { %>
         <div class="col s12 m6 l4" data-aos="fade-up">
             <div class="info center-align">
-                <a href="<%- myprojects[project].url %>" class="icon"
+                <!-- <a href="<%- myprojects[project].url %>" class="icon"
                    style="background: <%- myprojects[project].iconBackground %>" target="_blank">
-                    <i class="fa <%- myprojects[project].icon %>"></i>
-                </a>
+                    <i class"fa <%- myprojects[project].icon %>"></i>
+                </a> -->
                 <div class="info-title">
-                    <a href="<%- myprojects[project].url %>" target="_blank"><%- project %></a>
+                    <h4><%- project %></h4>
+                    <!-- <a href="<%- myprojects[project].url %>" target="_blank"><%- project %></a> -->
                 </div>
                 <div class="info-desc"><%- myprojects[project].desc %></div>
+                <div class="info-url">
+                    <a href="<%- myprojects[project].onlineUrl %>" target="_blank">线上体验</a>
+                    <a href="<%- myprojects[project].githubUrl %>" target="_blank">仓库地址</a>
+                </div>
             </div>
         </div>
         <% }); %>

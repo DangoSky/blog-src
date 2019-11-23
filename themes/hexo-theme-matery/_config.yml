@@ -166,20 +166,26 @@ myProjects:
   data:
     仿网易云音乐:
       icon: fa-music
-      iconBackground: '#DB4139'
-      # iconBackground: 'linear-gradient(to bottom right, #DB4139 0%, #81C784 100%)'
-      url: https://github.com/DangoSky/cloud-music
+      iconBackground: 'linear-gradient(to bottom right, #DB4139 0%, #81C784 100%)'
+      githubUrl: https://github.com/DangoSky/cloud-music
+      onlineUrl: http://dangosky.com/cloudmusic
       desc: Vue全家桶仿IOS版网易云音乐
     web版中国象棋:
-        icon: fa-user
+        icon: fa-chess-knight
         iconBackground: 'linear-gradient(to bottom right, #F06292 0%, #EF5350 100%)'
-        url: https://github.com/DangoSky/ChineseChess
-        desc: 单双人模式的中国象棋
+        githubUrl: https://github.com/DangoSky/ChineseChess
+        onlineUrl: http://dangosky.com/ChineseChess
+        desc: 基于JQuery、Websocket和node的双人对战的中国象棋（配有实时聊天室）
     web版2048小游戏:
         icon: fa-file-text-o
         iconBackground: 'linear-gradient(to bottom right, #29B6F6 0%, #1E88E5 100%)'
-        url: https://github.com/DangoSky/2048
-        desc: jQuery制作的2048小游戏
+        githubUrl: https://github.com/DangoSky/2048
+        onlineUrl: http://dangosky.com/2048/index.html
+        desc: jQuery制作的2048小游戏，支持pc端和mobile端
+    web版拼图小游戏:
+        githubUrl: https://github.com/DangoSky/puzzle-game
+        onlineUrl: http://dangosky.com/puzzle-game/index.html
+        desc: 基于Vue的拼图游戏，上传图片后选择将图片分割成N个碎片进行拼图
 
 # config my skills informations in about page.
 # If you don't want to display this `My Skills` content, you can deactivate or delete this configuration.

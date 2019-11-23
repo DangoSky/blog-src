@@ -1496,6 +1496,10 @@ table tr:nth-child(2n), thead {
     color: #999;
 }
 
+.my-projects .info .info-url a {
+    margin: 0 6px;
+}
+
 .my-skills .skillbar {
     position: relative;
     display: block;
