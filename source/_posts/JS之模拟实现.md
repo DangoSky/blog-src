@@ -1,36 +1,37 @@
 ---
-title: JS之模拟实现
+title: JS 之模拟实现
 date: 2019-03-28 11:09:25
 tags: JavaScript
 categories: JavaScript
-summary: 编写函数模拟实现JS中的一些api，包括但不限于bind、flat、new等，陆续更新中。
+summary: 编写函数模拟实现 JS 中的一些 api，包括但不限于 bind、flat、new 等，陆续更新中。
 cover: true
 ---
 
 # call
-&emsp;&emsp;利用函数作为对象方法的时候 this 指向了该对象，所以给目标对象添加要调用的函数并执行，了事后再删除该对象中这个方法就可以了。
+
+&emsp;&emsp; 利用函数作为对象方法的时候 this 指向了该对象，所以给目标对象添加要调用的函数并执行，了事后再删除该对象中这个方法就可以了。
 ```js
 Function.prototype._call = function(...arg) {
-  let context = arg[0] || window;   // 没有传递参数或参数为null和undefined时默认this指向window
+  let context = arg[0] || window;   // 没有传递参数或参数为 null 和 undefined 时默认 this 指向 window
   if(typeof context !== 'object') {
-    context = Object.create(null);  // context为原始值时this指向该原始值的自动包装对象。
+    context = Object.create(null);  // context 为原始值时 this 指向该原始值的自动包装对象。
   }
-  // 考虑到对象本身已经有fn这个方法，使用Symbol作为对象的属性名可以保证不会出现同名的属性
+  // 考虑到对象本身已经有 fn 这个方法，使用 Symbol 作为对象的属性名可以保证不会出现同名的属性
   let fn = Symbol();
-  // 通过this获取调用call的函数，方法中的this指向调用方法的对象
-  context[fn] = this;  
+  // 通过 this 获取调用 call 的函数，方法中的 this 指向调用方法的对象
+  context[fn] = this;
   // 函数可能有返回值
   let result = context[fn](...arg.slice(1));
   // 也可使用 eval 方法
-  // let result = eval('context[fn](' + '...arg.slice(1)' + ')');   
+  // let result = eval('context[fn](' + '...arg.slice(1)' + ')');
   // 最后记得要从对象中删除该方法
   delete context[fn];
-  return result;   
+  return result;
 }
 let name = "window";
 let obj = {
   name: "local"
-}    
+}
 function show(param) {
   console.log(this.name);
   console.log(param);
@@ -38,22 +39,22 @@ function show(param) {
 show._call(obj, "dangosky");、
 ```
 
-&emsp;&emsp;至于 apply，只是传入的参数变成了数组而已，导致了 arg 可能是一个二维数组。所以只需要把上述调用``content[fn]``函数的代码改为``context[fn](...(arg.slice(1).flat()))``即可，
+&emsp;&emsp; 至于 apply，只是传入的参数变成了数组而已，导致了 arg 可能是一个二维数组。所以只需要把上述调用 ``content[fn]`` 函数的代码改为 ``context[fn](...(arg.slice(1).flat()))`` 即可，
 
 # bind
-&emsp;&emsp;大致同 apply，但 bind 返回的是一个函数，并且需要考虑到返回的函数作为构造函数的情况。
+&emsp;&emsp; 大致同 apply，但 bind 返回的是一个函数，并且需要考虑到返回的函数作为构造函数的情况。
 ```js
 Function.prototype._bind = function(...arg) {
   let _this = this;
   let fn = function(...arg1) {
-    // 考虑到返回的函数作为构造函数时this会指向实例，即 this instanceof fn 为true，此时执行环境为实例自己。
-    // 若返回的函数只是作为普通函数调用，则this指向window，此时执行环境为最初指定的context
+    // 考虑到返回的函数作为构造函数时 this 会指向实例，即 this instanceof fn 为 true，此时执行环境为实例自己。
+    // 若返回的函数只是作为普通函数调用，则 this 指向 window，此时执行环境为最初指定的 context
     let context = this instanceof fn ? this : arg[0];
     return _this.call(context, ...arg.slice(1).concat(...arg1));
   }
   // 若返回的函数作为构造函数时，实例要继承原先绑定函数的属性方法，所以要改变返回的函数的原型。
   // 因为原型是一个对象，牵一发而动全身所以不能直接赋值
-  fn.prototype = Object.create(this.prototype); 
+  fn.prototype = Object.create(this.prototype);
   // 或者使用一个空函数充当中间代理
   // var empty = function () {};
   // empty.prototype = this.prototype;
@@ -63,24 +64,25 @@ Function.prototype._bind = function(...arg) {
 
 let obj = {
   name: "local"
-}    
+}
 function show(param1, param2) {
   console.log(this.name);
   console.log(param1 + param2);
 }
 var Fn = show._bind(obj, "Hello");
-Fn(" 作为的普通函数"); 
-var test = new Fn(" 作为构造函数");
+Fn("作为的普通函数");
+var test = new Fn("作为构造函数");
 ```
 
 # flat
+
 ## 迭代 + reduce
 
 ```js
 Array.prototype._flat = function(deep = 1) {
   let arr = this;
   while(deep--) {
-    // 标志数组是否已经达到一维，防止参数为Infinity时炸掉
+    // 标志数组是否已经达到一维，防止参数为 Infinity 时炸掉
     let mark = true;
     arr = arr.reduce((total, val) => {
       if(Array.isArray(val)) {
@@ -119,6 +121,7 @@ Array.prototype._flat = function(deep = 1) {
 ```
 
 ## 不考虑展平的深度（一展到底）
+
 ### 1. join + split
 ```js
 function _flat(arr) {
@@ -157,14 +160,15 @@ function _flat(arr) {
 }
 ```
 
-&emsp;&emsp;若只是展平二维数组，则还可以利用 apply 中第二个参数是(伪)数组，每个值都会单独添加即会被展平（仅限于二维数组）。
+&emsp;&emsp; 若只是展平二维数组，则还可以利用 apply 中第二个参数是 (伪) 数组，每个值都会单独添加即会被展平（仅限于二维数组）。
 ```js
 [].concat([[1], [[2, 3], [4]], 5, 6]);                 // [ [ 1 ], [ [ 2, 3 ], [ 4 ] ], 5, 6 ]
 [].concat.apply([], [[1], [[2, 3], [4]], 5, 6]);       // [ 1, [ 2, 3 ], [ 4 ], 5, 6 ]
 ```
 
 # new
-&emsp;&emsp;其实 new 的模拟实现很简单，只要理解 new 做的四件事就可以了：
+
+&emsp;&emsp; 其实 new 的模拟实现很简单，只要理解 new 做的四件事就可以了：
 1. 先创建一个新对象。
 2. 把新对象的原型绑定为构造函数的原型以实现继承。
 3. 执行构造函数而且 this 指向新对象。
@@ -175,7 +179,7 @@ function _new(Constructor, ...arg) {
   let obj = {};
   obj.__proto__ = Object.create(Constructor.prototype);
   let result = Constructor.apply(obj, arg);
-  return typeof result === 'object' ? result : obj; 
+  return typeof result === 'object' ? result : obj;
 }
 
 function Fn(name) {
@@ -185,7 +189,7 @@ function Fn(name) {
   }
 }
 Fn.prototype.foo = function () {
-  console.log('Hello ' + this.name);
+  console.log('Hello' + this.name);
 }
 var person = _new(Fn, 'dangosky')
 console.log(person.name);    // dangosky
@@ -194,10 +198,11 @@ person.foo();              // Hello dangosky
 ```
 
 # instanceof
-&emsp;&emsp;只要循环去取左值的原型和右值的原型比较即可。
+
+&emsp;&emsp; 只要循环去取左值的原型和右值的原型比较即可。
 ```js
 function _instanceof(left, right) {
-  // 左值需要是函数或非null的对象，右值需要是函数。
+  // 左值需要是函数或非 null 的对象，右值需要是函数。
   if(!((typeof left === "function" || (typeof left === "Object" && left !== null)) && typeof right === "function")) {
     throw new Error("传入的参数不符合规范。");
   }
@@ -216,7 +221,8 @@ function _instanceof(left, right) {
 ```
 
 # 深拷贝
-&emsp;&emsp;递归拷贝每一个引用类型数据即可。
+
+&emsp;&emsp; 递归拷贝每一个引用类型数据即可。
 
 ```js
 function deepCopy(obj) {
@@ -240,17 +246,18 @@ console.log(obj);    // { a: 1, arr: [ { t: 1 }, { t: 2 } ], b: null, c: undefin
 console.log(obj1);   // { a: 1, arr: [ { t: 1 }, { t: 20 } ], b: null, c: undefined }
 ```
 
-&emsp;&emsp;JSON.parse() + JSON.stringify()实现。
+&emsp;&emsp;JSON.parse() + JSON.stringify() 实现。
 ```js
 var obj = {a:1, arr: [{t: 1}, {t: 2}], b: null, c: undefined};
 let obj1 = JSON.parse(JSON.stringify(obj));
 ```
 
-> 至于这两种方法的不足，请看[我的另一篇文章](http://blog.dangosky.com/2019/04/01/shen-kao-bei-shi-xian/)介绍。
+> 至于这两种方法的不足，请看 [我的另一篇文章](http://blog.dangosky.com/2019/04/01/shen-kao-bei-shi-xian/) 介绍。
+
 
 # 记忆函数
 
-&emsp;&emsp;记忆函数的功能在于缓存先前操作得到的结果，避免对同一个值进行重复计算浪费时间，比如斐波那契数列和阶乘等运算，算是用空间换时间吧。
+&emsp;&emsp; 记忆函数的功能在于缓存先前操作得到的结果，避免对同一个值进行重复计算浪费时间，比如斐波那契数列和阶乘等运算，算是用空间换时间吧。
 
 ```js
 // 记忆函数
@@ -268,7 +275,7 @@ function memoize(res, fn) {
 // 斐波那契数列
 function fibonacci(fn, n) {
   return fn(n-1) + fn(n-2);
-} 
+}
 let memoizeFib = memoize([0, 1], fibonacci);
 console.log(memoizeFib(20));
 
@@ -280,7 +287,7 @@ let memoizeFac = memoize([0, 1], factorial);
 console.log(memoizeFac(6));
 ```
 
-# reduce实现map
+# reduce 实现 map
 
 ```js
 Array.prototype._map = function(fn, context = null) {
@@ -292,4 +299,60 @@ Array.prototype._map = function(fn, context = null) {
   }, null)
   return res;
 }
+```
+
+# Event 事件
+
+```js
+class EventEmitter {
+  constructor() {
+    this.events = new Map();  // 以事件名为键，监听函数数组为值
+  }
+
+  emit(name, ...arg) {
+    const handles = this.events.get(name);
+    if (handles && handles.length) {
+      handles.forEach(fn => {
+        if (arg.length) {
+          fn.apply(this, arg);
+        } else {
+          fn.call(this);
+        }
+      })
+      return true;
+    }
+    return false;
+  }
+
+  addListener(name, fn) {
+    const handles = this.events.get(name) || [];
+    handles.push(fn);
+    this.events.set(name, handles);
+  }
+
+  removeListener(name, fn) {
+    const handles = this.events.get(name) || [];
+    this.events.set(name, handles.filter(item => {
+      return item !== fn;
+    }))
+  }
+
+  removeAllListener(name) {
+    this.events.set(name, []);
+  }
+}
+
+/* test code */
+const event = new EventEmitter();
+
+function fn1() {
+  console.log('hello world');
+}
+function fn2(name) {
+  console.log(`hello ${name}`);
+}
+
+event.addListener('click', fn1);
+event.addListener('click', fn2);
+event.emit('click', 'DangoSky');
 ```
