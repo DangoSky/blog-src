@@ -70,16 +70,20 @@ obj.constructor === Fn     // true
 ![](1.jpg)
 
 # instanceof
-&emsp;&emsp;我们可以使用``instanceof``来判断一个对象在其原型链中是否存在一个构造函数的 prototype 属性。如 A instanceof B，即判断  B.prototype 是否在 对象A 的原型链上。在判定过程中会循着A的原型链上去查找，只要该对象出现在其原型链上的任一位置，就会判定为 true。当然也可以借此判断某一个数据的数据类型，不过这还是会有些不足，虽然判断一个数据是否为数组时``[] instanceof Array``会返回 true，但判定``[] instanceof  Object``也还是会返回 true，所以判定数据类型的时候还是采用``Object.prototype.toString.call()``的好。现在我们再来看下面的几个等式。
+
+&emsp;&emsp;我们可以使用``instanceof``来判断一个对象的原型链上是否存在一个构造函数的原型。如 A instanceof B，即判断  B.prototype 是否在对象 A 的原型链上。在判定过程中会循着 A 的原型链上去查找，只要该对象出现在其原型链上的任一位置，就会判定为 true。当然也可以借此判断某一个数据的数据类型，不过这还是会有些不足，虽然判断一个数据是否为数组时``[] instanceof Array``会返回 true，但判定``[] instanceof Object``也还是会返回 true，所以判定数据类型的时候还是采用``Object.prototype.toString.call()``的好。现在我们再来看下面的几个等式。
+
 ```js
 Object instanceof Function
 Function instanceof Function 
 Function instanceof Object 
-Object instanceof Object       // 上述几个式子都为true
+Object instanceof Object
+// 上述几个式子都为true
 ```
-&emsp;&emsp;前两个式子之所以会返回 true，是因为 Object 和 Function 等构造函数都继承自 ``Function.prototype``，所以所有的函数都能通过原型链找到创建它们的 Function 构造函数，自然也就返回了 true。而 ``Function.prototype``是一个对象，它的构造函数是 Object，所以在对 Function、Object等的原型链上寻找时会找到它们的构造函数 Object，自然也就返回了 true。
+&emsp;&emsp;前两个式子之所以会返回 true，是因为 Object 和 Function 等构造函数都继承自 ``Function.prototype``，所以所有的函数都能通过原型链找到创建它们的 Function 构造函数，自然也就返回了 true。而 ``Function.prototype``是一个对象，它的构造函数是 Object，所以在对 Function、Object 等的原型链上寻找时会找到它们的构造函数 Object，自然也就返回了 true。
 
 &emsp;&emsp;我们可以根据 instanceof 的工作原理来模拟实现 instanceof。
+
 ```js
 function _instanceof(left, right) {
   // 左值需要是函数或非null的对象，右值需要是函数。
@@ -99,6 +103,31 @@ function _instanceof(left, right) {
   }
 }
 ```
+
+`instanceof` 的工作原理是调用对象内置的 [Symbol.hasInstance](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Symbol/hasInstance) 方法，我们可以通过改写 `Symbol.hasInstance` 来自定义的 `instanceof` 行为。
+
+```js
+class PrimitiveNumber {
+  static [Symbol.hasInstance](x) {
+    return typeof x === 'number'
+  }
+}
+console.log(111 instanceof PrimitiveNumber); // true
+```
+
+# 判断数据类型的方法
+
+#### typeof
+
+可以判断基本数据类型，但判断数组、对象和 null 时，得到的都是 Object。可以在 typeof 的基础上再使用 Array.isArray 加以区分。
+
+#### instanceof
+
+可以判断基本数据类型，但判断引用类型的话，因为所有原型都继承自 Object，所以 `函数/数组 instanceof Object` 都会得到 true。
+
+#### toString
+
+通过 `Object.prototype.toString.call()` 来判断数据类型，不仅是基本数据类型还是引用数据类型，都可以得到正确结果。而且对于 Map、Set 等数据结构也能准确判断。
 
 
 # JS继承的几种方式
