@@ -357,6 +357,49 @@ event.addListener('click', fn2);
 event.emit('click', 'DangoSky');
 ```
 
+# 发布订阅模式
+
+```js
+class Publish {
+  constructor() {
+    this.subs = [];
+    // 数组元素的格式为：{id, callbacks: {cb1, cb2}}
+    // 订阅者的 callback 数据格式为对象，是为了使订阅者有多个订阅函数，并且在取消订阅时可以更好地区分订阅函数。
+    // 如果使用数组的话需要用数组下标这样语义不强
+  }
+  notice() {
+    this.subs.forEach(item => {
+      Object.values(item.callbacks).forEach(fn => {
+        fn && fn();
+      })
+    })
+  }
+  add(one) {
+    this.subs.push(one);
+  }
+  remove(sub, fnName) {
+    // 不传第二个参数(要移除的订阅者的某个订阅函数名)的话，就是移除整个订阅者
+    if (fnName === undefined) {
+      this.subs = this.subs.filter(item => {
+        return item.id !== sub.id;
+      })
+    } else {
+      // 只是移除订阅者的某个回调函数
+      this.subs.forEach(item => {
+        if (item.id === sub.id) {
+          for(let key in item.callbacks) {
+            if (key === fnName) {
+              item.callbacks[key] = null;
+            }
+          }
+        }
+      })
+    }
+  }
+}
+```
+
+
 # Promise
 
 ```js
