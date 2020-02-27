@@ -113,16 +113,15 @@ console.log([1, 2, [3, 4, [5, 6]]]._flat(Infinity));
 console.log([[1], [[2, 3], [4]], 5, 6]._flat());
 ```
 
-## 递归 + map
+## 递归
 
 ```js
 Array.prototype._flat = function(deep = 1) {
   let result = [];
   let arr = this;
   if(deep <= 0)  return arr;
-  arr.map((val) => {
+  arr.forEach((val) => {
     if(Array.isArray(val)) {
-      mark = true;
       result = result.concat(val._flat(deep-1));
     }
     else {
@@ -140,14 +139,14 @@ Array.prototype._flat = function(deep = 1) {
 ```js
 function _flat(arr) {
   return arr.join().split(',').map((val) => {
-    return Number(val);
+    return val; // 通过该方法得到的扁平数组元素都是string，得再根据需要去转换
   })
 }
 console.log(_flat([[1], [[2, 3], [4]], 5, 6]));
 console.log(_flat([1, '1', ['1', '2', [3, '4']]]));
 ```
 
-### 2. reduce + 递归
+### 2. 递归 + reduce
 ```js
 function _flat(arr) {
   return arr.reduce((total, val) => {
@@ -162,7 +161,7 @@ function _flat(arr) {
 }
 ```
 
-### 3. some + 循环
+### 3. 循环判断 + 扩展运算符
 ```js
 function _flat(arr) {
   while(arr.some((val) => {
@@ -174,7 +173,7 @@ function _flat(arr) {
 }
 ```
 
-&emsp;&emsp; 若只是展平二维数组，则还可以利用 apply 中第二个参数是 (伪) 数组，每个值都会单独添加即会被展平（仅限于二维数组）。
+&emsp;&emsp; 若只是展平二维数组，则还可以利用 apply 中第二个参数是 (伪) 数组时，每个值都会单独添加即会被展平（仅限于展平深度为 1）。
 ```js
 [].concat([[1], [[2, 3], [4]], 5, 6]);                 // [ [ 1 ], [ [ 2, 3 ], [ 4 ] ], 5, 6 ]
 [].concat.apply([], [[1], [[2, 3], [4]], 5, 6]);       // [ 1, [ 2, 3 ], [ 4 ], 5, 6 ]
@@ -301,16 +300,115 @@ let memoizeFac = memoize([0, 1], factorial);
 console.log(memoizeFac(6));
 ```
 
-# reduce 实现 map
+# 实现数组的 map 方法
 
 ```js
 Array.prototype._map = function(fn, context = null) {
-  let arr = this;
-  let res = [];
-  arr.reduce((total, curVal, index, arr) => {
-    let temp = fn.call(context, curVal, index, arr);
+  if (this === null || this === undefined) {
+    throw new TypeError("Cannot read property 'map' of null or undefined");
+  }
+  if (Object.prototype.toString.call(fn) != "[object Function]") {
+    throw new TypeError(fn + ' is not a function')
+  }
+  const arr = this;
+  const res = [];
+  arr.forEach((val, index, arr) => {
+    let temp = fn.call(context, val, index, arr);
     res.push(temp);
-  }, null)
+  })
+  return res;
+}
+```
+
+# 实现数组的 reduce 方法
+
+```js
+Array.prototype._reduce = function(fn, initialValue, context = null) {
+  if (this === null || this === undefined) {
+    throw new TypeError("Cannot read property 'reduce' of null or undefined");
+  }
+  if (Object.prototype.toString.call(fn) != "[object Function]") {
+    throw new TypeError(fn + ' is not a function')
+  }
+  const arr = this;
+  // 如果有传初始值的话，则结果值初始化为该初始值；否则初始化为数组第一个元素
+  const hasInitialValue = initialValue !== undefined;
+  let res = hasInitialValue ? initialValue : arr[0];  
+  for(let i=0; i<arr.length; i++) {
+    // 如果 res 已经被初始化为数组第一个元素，则不需要对第一个数组元素进行计算了
+    if (!hasInitialValue && i === 0) {
+      continue;
+    }
+    res = fn.call(context, res, arr[i], i, arr);
+  }
+  return res;
+}
+```
+
+# 实现数组的 filter 方法
+
+```js
+Array.prototype._filter = function(fn, context = null) {
+  if (this === null || this === undefined) {
+    throw new TypeError("Cannot read property 'reduce' of null or undefined");
+  }
+  if (Object.prototype.toString.call(fn) != "[object Function]") {
+    throw new TypeError(fn + ' is not a function')
+  }
+  const arr = this;
+  const res = [];
+  for(let i=0; i<arr.length; i++) {
+    const mark = fn.call(context, arr[i], i, arr);
+    if (!mark) {
+      res.push(arr[i]);
+    }
+  }
+  return res;
+}
+```
+
+# 实现数组的 push 方法
+
+```js
+Array.prototype._push = function(...items) {
+  let arr = this;
+  let originLen = arr.length;
+  let addLength = items.length;
+  for (let i=0; i<addLength; i++) {
+    arr[originLen + i] = items[i];
+  }
+  // 考虑到对象可能也会调用 push 方法，所以得手动修改 length 属性。可见下例
+  arr.length = originLen + addLength;
+  return arr.length;
+}
+
+/* test */
+var obj = {
+  length: 0,
+  addElem: function addElem (elem) {
+    [].push.call(this, elem);
+  }
+};
+obj.addElem({});
+obj.addElem({});
+console.log(obj);
+```
+
+# 实现数组的 pop 方法
+
+```js
+Array.prototype._pop = function() {
+  let arr = this;
+  let len = (+arr.length);
+  // 如果不包含length属性或length属性不能被转成一个数值，会将length置为0，并返回undefined（参考自MDN）
+  if (len === undefined || typeof len !== 'Number') {
+    arr.length = 0;
+    return undefined;
+  }
+  len--;
+  const res = arr[len];
+  delete arr[len];
+  arr.length = len;
   return res;
 }
 ```

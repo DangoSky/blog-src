@@ -119,7 +119,7 @@ console.log(111 instanceof PrimitiveNumber); // true
 
 #### typeof
 
-可以判断基本数据类型，但判断数组、对象和 null 时，得到的都是 Object。可以在 typeof 的基础上再使用 Array.isArray 加以区分。
+可以判断基本数据类型，但判断数组、对象和 null 时得到的都是 Object，并且 `typeof NaN` 会得到 Number。可以在 typeof 的基础上再使用 Array.isArray 加以区分。
 
 #### instanceof
 
@@ -210,7 +210,9 @@ console.log(a.d);   // undefined
 ```
 
 ## 构造函数继承 + 原型链继承
+
 &emsp;&emsp;既然构造函数继承法里不存在实例修改父构造函数上引用类型的值会相互影响的问题，那么我们便可以采用构造函数继承 + 原型链继承的方法了。使用构造函数继承法使子构造函数拥有父构造函数的属性和方法，使用原型链继承法修改子构造函数的原型使其指向父构造函数的原型。
+
 ```js
 function Parent() {
   this.name = "Parent";
@@ -228,15 +230,19 @@ Child.prototype = Parent.prototype;
 let child = new Child();   
 child.arr[0] = 10;        
 let child1 = new Child();  // child.arr -> [10, 3]，child1.arr -> [1, 3]
-```js
+```
+
 &emsp;&emsp;现在可以看到，即使在 Child 的一个实例上修改了 arr 的值，也不会影响到 其他实例上 arr 的值了。不过问题又来了，当我们``console.log(child.constructor)``的时候，发现输出的会是 Parent 构造函数。这问题也很好理解，因为我们修改了 child.prototype 的原型，而我们对某一个对象或函数使用 constructor 属性时是到它们的原型上去读取的，所以 child 的构造函数自然也就成了 Parent。既然如此，我们可以手动把它的构造函数改回来，设置``Child.prototype.constructor = Child``。
+
 ```js
 Child.prototype.constructor = Child
 console.log(child.constructor);    // Child函数
 let parent = new Parent();
 console.log(parent.constructor);  // Child函数
 ```
+
 &emsp;&emsp;虽然通过手动修改 Child.prototype 的 constructor 属性可以修正 Child 实例的构造函数指向错误问题，但当我们输出 Parent 实例的构造函数的时候发现也同样输出了 Child 函数！原因呢？我们可能会忽略了一点，``Child.prototype``是一个对象，而对象是按引用传递，牵一发而动全身！知道了问题所在，就可以对症下药了。使用``Object.create``方法既可以以参数为原型创建一个对象，也可以防止修改对象时也对原本的对象造成影响（但修改参数对象的话是会对实例对象造成修改的）。除了``Object.create``方法外，也可以使用``Child.prototype = JSON.parse(JSON.stringify(Parent.prototype))``，作用是一样的。最终的构造函数继承 + 原型链继承方法的代码实现为：
+
 ```js
 function Parent() {
   // 父构造函数的属性和方法
