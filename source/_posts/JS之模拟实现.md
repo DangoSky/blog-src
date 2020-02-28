@@ -25,19 +25,19 @@ function is(x, y) {
 
 &emsp;&emsp; 利用函数作为对象方法的时候 this 指向了该对象，所以给目标对象添加要调用的函数并执行，了事后再删除该对象中这个方法就可以了。
 ```js
-Function.prototype._call = function(...arg) {
-  let context = arg[0] || window;   // 没有传递参数或参数为 null 和 undefined 时默认 this 指向 window
+Function.prototype._call = function(context, ...arg) {
+  context = context || window;   // 没有传递参数或参数为 null 和 undefined 时默认 this 指向 window
   if(typeof context !== 'object') {
     context = Object.create(null);  // context 为原始值时 this 指向该原始值的自动包装对象。
   }
   // 考虑到对象本身已经有 fn 这个方法，使用 Symbol 作为对象的属性名可以保证不会出现同名的属性
-  let fn = Symbol();
+  const fn = Symbol('fn');
   // 通过 this 获取调用 call 的函数，方法中的 this 指向调用方法的对象
   context[fn] = this;
   // 函数可能有返回值
-  let result = context[fn](...arg.slice(1));
+  const result = context[fn](...arg);
   // 也可使用 eval 方法
-  // let result = eval('context[fn](' + '...arg.slice(1)' + ')');
+  // let result = eval('context[fn](' + '...arg' + ')');
   // 最后记得要从对象中删除该方法
   delete context[fn];
   return result;
@@ -50,21 +50,39 @@ function show(param) {
   console.log(this.name);
   console.log(param);
 }
-show._call(obj, "dangosky");、
+show._call(obj, "dangosky");
 ```
 
-&emsp;&emsp; 至于 apply，只是传入的参数变成了数组而已，导致了 arg 可能是一个二维数组。所以只需要把上述调用 ``content[fn]`` 函数的代码改为 ``context[fn](...(arg.slice(1).flat()))`` 即可，
+# apply
+
+```js
+Function.prototype._apply = function(context, arg) {
+  context = context || window;
+  if(typeof context !== 'object') {
+    context = Object.create(null);
+  }
+  const fn = Symbol('fn');
+  context[fn] = this;
+  const result = context[fn](...arg);
+  delete context[fn];
+  return result;
+}
+```
+
 
 # bind
+
 &emsp;&emsp; 大致同 apply，但 bind 返回的是一个函数，并且需要考虑到返回的函数作为构造函数的情况。
+
 ```js
-Function.prototype._bind = function(...arg) {
+Function.prototype._bind = function(context, ...arg) {
+  // 保存 this，表示调用 bind 的函数
   let _this = this;
   let fn = function(...arg1) {
     // 考虑到返回的函数作为构造函数时 this 会指向实例，即 this instanceof fn 为 true，此时执行环境为实例自己。
     // 若返回的函数只是作为普通函数调用，则 this 指向 window，此时执行环境为最初指定的 context
-    let context = this instanceof fn ? this : arg[0];
-    return _this.call(context, ...arg.slice(1).concat(...arg1));
+    context = this instanceof fn ? this : context
+    return _this.apply(context, arg.concat(arg1));
   }
   // 若返回的函数作为构造函数时，实例要继承原先绑定函数的属性方法，所以要改变返回的函数的原型。
   // 因为原型是一个对象，牵一发而动全身所以不能直接赋值
@@ -189,10 +207,15 @@ function _flat(arr) {
 
 ```js
 function _new(Constructor, ...arg) {
+  if(typeof Constructor !== 'function'){
+    throw `${Constructor} must be a function`;
+  }
   let obj = {};
   obj.__proto__ = Object.create(Constructor.prototype);
   let result = Constructor.apply(obj, arg);
-  return typeof result === 'object' ? result : obj;
+  const isObject = typeof result === 'object' && result !== null;
+  const isFunction = typeof result === 'function';
+  return (isObject || isFunction) ? result : obj;
 }
 
 function Fn(name) {
@@ -412,6 +435,52 @@ Array.prototype._pop = function() {
   return res;
 }
 ```
+
+# 实现数组的 splice 方法
+
+```js
+Array.prototype._splice = function(start, deleteSum, ...arg) {
+  const arr = this;
+  const len = arr.length;
+  const res = [];
+  // 处理开始索引为负数或越界的情况
+  if (start < 0) {
+    start = start + len > 0 ? start + len : 0;
+  } else if(start > len) {
+    start = len;
+  }
+  // 处理删除个数异常的情况。如果没有指定删除个数或其大于数组剩下的元素，则调整为删除剩下的所有元素
+  if (deleteSum === undefined || deleteSum > len - start) {
+    deleteSum = len - start;
+  } else if(deleteSum < 0) {
+    deleteSum = 0;
+  }
+
+  // 先将剩下的数组元素排到要新增的数组元素后面，这样就可以直接替换而不必去区分是剩下的数组元素亦或是要新增的了
+  for(let i=start+deleteSum; i<len; i++) {
+    arg.push(arr[i]);
+  }
+  let sum = 0;  // 表示已经删除的个数
+  let arrIndex = start; // 循环原数组的索引
+  let argIndex= 0;  // 循环要替换的数组的索引
+  // 删除个数已经达到了并且要替换的数组已经全部替换完了才退出循环
+  while(sum < deleteSum || argIndex < arg.length) {
+    if (sum < deleteSum) {
+      res.push(arr[arrIndex]);
+      sum++;
+    }
+    arr[arrIndex++] = arg[argIndex++];
+  }
+  // 为避免因删除的个数和新增的个数不相等时，进行数组替换会出现undefined，所以最后还需要修改数组长度
+  if (arg.length === 0) {
+    arr.length = len - deleteSum;
+  } else {
+    arr.length = start + arg.length;
+  }
+  return res;
+}
+```
+
 
 # Event 事件
 
