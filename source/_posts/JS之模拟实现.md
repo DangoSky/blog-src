@@ -583,7 +583,94 @@ class Publish {
 ```
 
 
-# Promise
+# 基础版 Promise
+
+```js
+const PEDDING = 'pedding';
+const RESOLVED = 'resolved';
+const REJECTED = 'rejected';
+
+function Promise(fn) {
+  this.value = null;
+  this.status = PEDDING;
+  this.callbacks = [];
+
+  const resolve = (res) => {
+    if (this.status === PEDDING) {
+      this.value = res;
+      this.status = RESOLVED;
+      setTimeout(() => {
+        this.callbacks.forEach(cb => {
+          cb.onResolve(res);
+        })
+      });
+    }
+  }
+
+  const reject = (err) => {
+    if (this.status === PEDDING) {
+      this.value = err;
+      this.status = REJECTED;
+      setTimeout(() => {
+        this.callbacks.forEach(cb => {
+          cb.onReject(err);
+        }) 
+      });
+    }
+  }
+  
+  try {
+    fn(resolve, reject);
+  } catch(err) {
+    reject(err);
+  }
+}
+
+Promise.prototype.then = function(onResolve, onReject) {
+  if (typeof onResolve !== 'function') {
+    onResolve = () => {
+      return this.value;
+    }
+  }
+  if (typeof onReject !== 'function') {
+    onReject = () => {
+      return this.value;
+    }
+  }
+  return new Promise((resolve, reject) => {
+    if (this.status === PEDDING) {
+      this.callbacks.push({
+        onResolve: val => {
+          const res = onResolve(val);
+          resolve(res);
+        },
+        onReject: val => {
+          const res = onReject(val);
+          reject(res);
+        }
+      })
+    } else if (this.status === RESOLVED) {
+      setTimeout(() => {
+        const res = onResolve(this.value);
+        resolve(res);
+      });
+    } else if (this.status === REJECTED) {
+      setTimeout(() => {
+        const err = onReject(this.value);
+        reject(err);
+      });
+    }
+  })
+}
+```
+
+基础版 Promise 的不足:
+1. 没有 try...catch，无法捕获错误。
+2. 没有对 then 的返回值进行判断，可能会返回一个 promise，并需要对这个返回的 promise 做合规校验并解析它的结果。
+3. 没有对重复的代码进行封装。
+4. 没有实现静态 resolve、reject 方法，以及 all、race 方法。
+
+# 完善版 Promise
 
 ```js
 const PEDDING = 'pedding';
@@ -735,4 +822,55 @@ Promise.race = function(promises) {
     })
   })
 }
+```
+
+# async
+
+```js
+function _async(gen) {
+  // 返回一个函数，使得 gen 可以接受参数
+  return function(...arg) {
+    // async/await 的返回值是一个 Promise
+    return new Promise((resolve, reject) => {
+      const g = gen(...arg);  
+      function _next(val) {
+        let res = null;
+        try {
+          res = g.next(val);
+        } catch(err) {
+          return reject(err);
+        }
+        // 如果遍历器已经遍历结束则直接 resolve 掉 Promise，否则递归调用 _next 以遍历完
+        if (res.done) {
+          return resolve(res.value);
+        }
+        // yield 后面可以跟 Promise 和基本数据类型，如果为 Promise 的话还得去获取它的结果，所以统一转化为 Promise 方便去获取 res.value
+        Promise.resolve(res.value).then((val) => {
+          _next(val);
+        }, (err) => {
+          // 抛出错误以便被外层的 try-catch 捕获
+          g.throw(err)
+        })
+      }
+      _next();
+    })
+  }
+}
+
+/* test */
+const getData = (name) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve('My name is ' + name)
+    }, 1000) // 模拟异步获取数据
+  })
+}
+const run = _async(function * (lastName) {
+  const data1 = yield getData('Jerry ' + lastName)
+  const data2 = yield getData('Lucy ' + lastName)
+  return [data1, data2]
+})
+run('Green').then((val) => {
+  console.log(val)  // [ 'My name is Jerry Green', 'My name is Lucy Green' ]
+})
 ```
