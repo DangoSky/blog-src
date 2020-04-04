@@ -874,3 +874,50 @@ run('Green').then((val) => {
   console.log(val)  // [ 'My name is Jerry Green', 'My name is Lucy Green' ]
 })
 ```
+
+# 数组去重
+
+## splice
+
+排序后循环判断当前的数组元素值是否等于上一个数组元素，是的话则用 `splice` 删除。该方法会影响到原数组。并且如果数组中包含了字符串的话，该方法无法做到去重，因为排序后，两个相同的数值之间可能会含有它们的字符串形式，导致判断失效。
+
+```js
+function removeDuplicates(arr) {
+  arr.sort((a, b) => {
+    return a - b;
+  })
+  for(let i=0; i<arr.length; i++) {
+    if(arr[i] === arr[i-1]) {
+      arr.splice(i, 1);
+      i--;
+    }
+  }
+}
+
+/* test */
+const arr = [1, '1', 1, 22, 3, 3, '33', 22, '3'];
+```
+
+## filter + indexOf
+
+使用 `indexOf` 和当前的数组下标进行比较，可以得到当前的数组元素是否是重复出现。该方法不需要排序，也不会影响到原数组。
+
+```js
+function removeDuplicates(arr) {
+  let res = arr.filter((val, index) => {
+    return arr.indexOf(val) === index;   // 去重
+    // return arr.indexOf(parseInt(val)) === index;       // 可以先使用 parseInt 解析来转化字符串
+    // return arr.indexOf(val) === arr.lastIndexOf(val);   // 用于找数组中没有重复的数
+  })
+  return res;
+}
+```
+
+## Set
+
+```js
+function removeDuplicates(arr) {
+  return [...new Set(arr)];
+  // return Array.from(new Set(arr));
+}
+```
