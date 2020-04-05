@@ -99,6 +99,6 @@ let y = e.clientY - targetEle.clientHeight / 2;
 &emsp;&emsp;说到这个就有些尴尬了，我之前以为``background-position``的两个属性值 x 和 y 代表的是在这张图片上定位到（x, y）这个坐标的位置上再显示背景图片，结果导致使用``background-position``定位到的碎片显示的图片位置错位。又因为我老是以为是我中间哪里出问题了所以一直没有想到是我自己对``background-position``理解出错上去（Orz），最后单独起了个 demo 实验才发现问题所在。**原来``background-position``的两个属性值 x 和 y 代表的是将这张图片向右移动和向下移动指定的距离后再显示背景图片**。和我之前理解的恰恰相反，而且因为我之前没有设置``background-repeat: no-repeat``所以如果只有四个碎片的话是不会表现出什么问题的。知道了``background-position``的真正意思后要解决就很容易了，只要把 x 和 y 都变成负值就可以啦。
 
 # 后记
-&emsp;&emsp;**Puzzle Game** 写起来还是挺简单的，主要是一时兴起练练手吧。中午去食堂的时候才想起来我在写一个[Web Project](http://blog.dangosky.com/tags/WebProject/)的时候应该边写边记录的才对啊。像这个 **Puzzle Game** 就是边写代码的过程中边三言两语记录下遇到的问题和解决方案，这样事后才可以总结成一篇博客，记录自己遇到的坑点和盲点。不然就跟之前写的[cloud music](http://blog.dangosky.com/2019/03/10/vue%E5%85%A8%E5%AE%B6%E6%A1%B6%E4%BB%BFiOS%E7%89%88%E7%BD%91%E6%98%93%E4%BA%91%E9%9F%B3%E4%B9%90/)一样，没有边写代码边记录遇到的问题，所以等写完代码后都差不多忘记中间遇到的很多问题了，写成的博客也就很空淡。好吧，吸收经验，下次就要记得正确的学习姿势了！
+&emsp;&emsp;**Puzzle Game** 写起来还是挺简单的，主要是一时兴起练练手吧。中午去食堂的时候才想起来我在写一个[Web Project](http://blog.dangosky.com/categories/Web-Project/)的时候应该边写边记录的才对啊。像这个 **Puzzle Game** 就是边写代码的过程中边三言两语记录下遇到的问题和解决方案，这样事后才可以总结成一篇博客，记录自己遇到的坑点和盲点。不然就跟之前写的[cloud music](http://blog.dangosky.com/2019/02/25/vue%E5%85%A8%E5%AE%B6%E6%A1%B6%E4%BB%BFiOS%E7%89%88%E7%BD%91%E6%98%93%E4%BA%91%E9%9F%B3%E4%B9%90/)一样，没有边写代码边记录遇到的问题，所以等写完代码后都差不多忘记中间遇到的很多问题了，写成的博客也就很空淡。好吧，吸收经验，下次就要记得正确的学习姿势了！
 
 &emsp;&emsp;花了三天的时间写完 **Puzzle Game** 和这篇博客，五一假期就只剩下这半天了啊。我还是滚回去写我的数据结构实验了，挥挥。

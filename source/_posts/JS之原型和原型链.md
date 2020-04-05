@@ -258,3 +258,4 @@ Child.prototype = Object.create(Parent.prototype);
 Child.prototype.constructor = Child;
 ```
 
+（如果要实现多继承的话，貌似只能通过 `__proto__` 将一个个父类连接到子类上，或者通过 `Object.assign` 方法将所有父类的原型都集中到一个上，再将这个集万千个原型于一体的父类 通过 `Object.create` 方法赋给子类）

@@ -256,7 +256,7 @@ function _instanceof(left, right) {
 }
 ```
 
-# 深拷贝
+# 基础版深拷贝
 
 &emsp;&emsp; 递归拷贝每一个引用类型数据即可。
 
@@ -288,8 +288,45 @@ var obj = {a:1, arr: [{t: 1}, {t: 2}], b: null, c: undefined};
 let obj1 = JSON.parse(JSON.stringify(obj));
 ```
 
-> 至于这两种方法的不足，请看 [我的另一篇文章](http://blog.dangosky.com/2019/04/01/shen-kao-bei-shi-xian/) 介绍。
+> 至于这两种方法的不足，请看[我的另一篇文章](http://blog.dangosky.com/2019/04/01/%E6%B7%B1%E6%8B%B7%E8%B4%9D%E5%AE%9E%E7%8E%B0/) 介绍。
 
+# 优化版深拷贝
+
+> 优化方向和思路还是参考[我的另一篇文章](http://blog.dangosky.com/2019/04/01/%E6%B7%B1%E6%8B%B7%E8%B4%9D%E5%AE%9E%E7%8E%B0/#toc-heading-6) 介绍。
+
+```js
+function deepCopy(obj, map = new WeakMap()) {
+  if (map.get(obj)) {
+    return obj;
+  }
+  // 如果 obj 只是基本类型的话，就直接返回
+  if(typeof obj !== 'object' || obj === null) return obj;
+  const objType = Object.prototype.toString.call(obj);
+  // 根据 obj 的数据类型获取到它的构造函数
+  const constructorFn = Object.getPrototypeOf(obj).constructor;
+  // 根据构造器创建不同的数据类型，并注意需要传递 obj 为参数。如果是 Date、Error 等数据类型才可以获取到这个值
+  const res = new constructorFn(obj);
+  // 标记 obj 已经拷贝过了
+  map.set(obj, true);
+  if (objType === "[object Array]" || objType === "[object Object]") {
+    for(let key in obj) {
+      // 因为 in 方法会遍历到 obj 的原型连上，所以需要判 key 是不是 obj 自己的属性
+      if (obj.hasOwnProperty(key)) {
+        res[key] = deepCopy(obj[key], map);
+      }
+    }
+  } else if (objType === "[object Map]") {
+    obj.forEach((item, key) => {
+      res.set(deepCopy(key), deepCopy(item));
+    })
+  } else if (objType === "[object Set]") {
+    obj.forEach(item => {
+      res.add(deepCopy(item));
+    })
+  }
+  return res;
+}
+```
 
 # 记忆函数
 
