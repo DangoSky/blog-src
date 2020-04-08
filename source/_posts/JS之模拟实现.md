@@ -10,15 +10,23 @@ cover: true
 # Object.is
 
 ```js
-function is(x, y) {
-  // 修正 +0 === -0 为 true 的 bug
-  if (x === y) {
-    // 运行到 1/x === 1/y 的时候x和y都为0，但是 1/+0 = +Infinity，1/-0 = -Infinity, 两者不相等
-    return x !== 0 || y !== 0 || 1 / x === 1 / y;
-  } else {
-    // 修正 NaN !== NaN 为 false 的 bug
-    return x !== x && y !== y;
+function is(a, b) {
+  // 修正 NaN !== NaN 为 false 的 bug
+  if (a !== a && b !== b) {
+    return true;
   }
+  // 修正 +0 === -0 为 true 的 bug
+  // 1/+0 = +Infinity，1/-0 = -Infinity
+  if (
+    a === b &&
+    a === 0 &&
+    b === 0 &&
+    1 / a !== 1 / b
+  ) {
+    return false;
+  }
+  return a === b;
+}
 ```
 
 # call
@@ -42,6 +50,8 @@ Function.prototype._call = function(context, ...arg) {
   delete context[fn];
   return result;
 }
+
+/* test */
 let name = "window";
 let obj = {
   name: "local"
@@ -94,6 +104,7 @@ Function.prototype._bind = function(context, ...arg) {
   return fn;
 }
 
+/* test */
 let obj = {
   name: "local"
 }
@@ -130,6 +141,30 @@ Array.prototype._flat = function(deep = 1) {
 console.log([1, 2, [3, 4, [5, 6]]]._flat(Infinity));
 console.log([[1], [[2, 3], [4]], 5, 6]._flat());
 ```
+
+## 迭代 + map
+
+```js
+Array.prototype._flat = function(deep = 1) {
+  let res = this;
+  while(deep--) {
+    let isFinish = true;
+    let temp = [];
+    res.map(item => {
+      if (Array.isArray(item)) {
+        isFinish = false;
+      }
+      temp = temp.concat(item);    
+    })
+    res = temp;
+    if (isFinish) {
+      break;
+    }
+  }
+  return res;
+}
+```
+
 
 ## 递归
 
@@ -192,6 +227,7 @@ function _flat(arr) {
 ```
 
 &emsp;&emsp; 若只是展平二维数组，则还可以利用 apply 中第二个参数是 (伪) 数组时，每个值都会单独添加即会被展平（仅限于展平深度为 1）。
+
 ```js
 [].concat([[1], [[2, 3], [4]], 5, 6]);                 // [ [ 1 ], [ [ 2, 3 ], [ 4 ] ], 5, 6 ]
 [].concat.apply([], [[1], [[2, 3], [4]], 5, 6]);       // [ 1, [ 2, 3 ], [ 4 ], 5, 6 ]
@@ -211,7 +247,7 @@ function _new(Constructor, ...arg) {
     throw `${Constructor} must be a function`;
   }
   let obj = {};
-  obj.__proto__ = Object.create(Constructor.prototype);
+  Object.setPrototypeOf(obj, Object.create(Constructor.prototype));
   let result = Constructor.apply(obj, arg);
   const isObject = typeof result === 'object' && result !== null;
   const isFunction = typeof result === 'function';
@@ -248,7 +284,7 @@ function _instanceof(left, right) {
     if(_left === _right) {
       return true
     }
-    else if(_left === null) {
+    if(_left === null) {
       return false
     }
     _left = _left.__proto__;
@@ -419,7 +455,7 @@ Array.prototype._filter = function(fn, context = null) {
   const res = [];
   for(let i=0; i<arr.length; i++) {
     const mark = fn.call(context, arr[i], i, arr);
-    if (!mark) {
+    if (mark) {
       res.push(arr[i]);
     }
   }
@@ -531,11 +567,7 @@ class EventEmitter {
     const handles = this.events.get(name);
     if (handles && handles.length) {
       handles.forEach(fn => {
-        if (arg.length) {
-          fn.apply(this, arg);
-        } else {
-          fn.call(this);
-        }
+        fn.apply(this, arg);
       })
       return true;
     }
