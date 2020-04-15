@@ -1,7 +1,9 @@
 ---
 title: Git常用命令
 date: 2019-09-03 00:36:03
-tags: Git
+tags:
+  - Git
+  - 实习记录
 categories: Git
 summary: 整理一些常用的 Git 命令。
 specialImg: 8.png

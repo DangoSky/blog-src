@@ -1,8 +1,11 @@
 ---
 title: Vue双向数据绑定原理
 date: 2019-08-17 23:52:53
-tags: Vue
-categories: Vue
+tags:
+  - Vue
+  - JavaScript
+categories:
+  - Vue
 summary: 动手实现一个简易版的MVVM，理解Vue双向数据绑定的过程。
 specialImg: 2.png
 ---

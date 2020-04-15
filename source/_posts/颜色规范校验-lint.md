@@ -5,7 +5,8 @@ tags:
   - Node
   - 正则表达式
   - AST
-categories: JavaScript
+  - 实习记录
+categories: 实习记录
 summary: 记录查找样式文件中使用到的色值的技术实现过程，以及编码过程遇到的一些坑。
 changeRandomImg: 19
 ---
