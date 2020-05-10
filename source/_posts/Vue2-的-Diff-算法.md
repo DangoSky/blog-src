@@ -15,7 +15,7 @@ specialImg: 2.png
 
 ## 什么是虚拟 DOM
 
-要理解 Diff 算法，就得先理解好虚拟 DOM。虚拟 DOM 说白了其实就只是一个 JavaScript 对象，它抽象地描述了一个真实的 DOM 结构。我们可以从 Chrome 的 DevTools 中看到，一个 DOM 结构无非是由很多个 HTML 标签根据父子、兄弟等关系组织起来的，而每个 HTML 标签又包含了各种属性，比如 style、class、src 等。所以只要知道了真实 DOM 的结构，我们就可以把它抽象成一个对象的形式来描述，这个对象就是虚拟 DOM。我们可以通过递归的方式将一个 DOM 结构解析成一个虚拟 DOM，也可以通过 `document.createElement` 的方法把一个虚拟 DOM 还原成一个真实 DOM。
+要理解 Diff 算法，就得先理解好虚拟 DOM。虚拟 DOM 说白了其实就只是一个 JavaScript 对象，它抽象地描述了一个真实的 DOM 结构。我们可以从 Chrome 的 DevTools 中看到，一个 DOM 结构无非是由很多个 HTML 标签根据父子、兄弟等关系组织起来的，而每个 HTML 标签又包含了各种属性，比如 style、class、src 等。所以只要知道了真实 DOM 的结构，我们就可以把它抽象成一个对象的形式来描述，这个对象就是虚拟 DOM。我们可以通过递归的方式将一个 DOM 结构解析成一个虚拟 DOM，也可以通过 `document.createElement` 把一个虚拟 DOM 还原成一个真实 DOM。
 
 
 Vue 中一个虚拟 DOM 节点（VNode） 包含了很多项数据，具体可以看源码 [vue/src/core/vdom/vnode.js](https://github.com/vuejs/vue/blob/dev/src/core/vdom/vnode.js)。但为了方便，在这里一个 VNode 包含最基本的三个属性就可以了，分别是节点类型 tag、属性 data、子元素 children。
@@ -160,9 +160,13 @@ const builds = {
 
 ## Vue2 Diff 源码分析
 
-接下来我们来看源码。为了方便阅读，以下摘抄的源码只截取其中重点的部分。
+现在我们来看 Vue 中和 Diff 相关源码。为了方便阅读，以下摘抄的源码只截取其中重点的部分。
 
-当初始化渲染、组件更新的时候，Vue 会调用原型上的 `_update` 方法进行 Diff。可以看到，其中主要是通过 `vm.__patch__` 方法进行 Diff、获取修改补丁、更新 DOM 并返回新的 DOM 等操作。当页面初始化渲染时，此时 `vm._vnode` 为初始值 [null](https://github.com/vuejs/vue/blob/dev/src/core/instance/render.js#L20），
+当初始化渲染、组件更新的时候，Vue 会调用原型上的 `_update` 函数进行 Diff。可以看到，其中主要是通过 `vm.__patch__` 函数进行 Diff、获取修改补丁、更新 DOM 并返回新的真实 DOM 等操作。当页面初始化渲染时，此时 `vm._vnode` 为初始值 [null](https://github.com/vuejs/vue/blob/dev/src/core/instance/render.js#L20)，所以此时的更新操作走 `vm.__patch__(vm.$el, vnode, hydrating, false)`。
+
+可以看到，两者的差别主要在于传递给 `vm.__patch__` 函数的第一个参数不同。初始渲染时由于还没有保留虚拟 DOM，所以第一个参数是 [vm.$el](https://cn.vuejs.org/v2/api/#vm-el)，即 Vue 实例使用的根 DOM 元素比如我们常用的 `#app`，它是一个真实的 DOM 节点。而之后更新页面时 `prevVnode` 都指向了上次更新后的虚拟 DOM，它是一个虚拟 DOM。在 `vm.__patch__` 函数中它会判断第一个参数是真实的 DOM 节点还是虚拟 DOM，如果是真实的 DOM 节点的话就不进行 Diff，直接创建 DOM（相关代码下文会指出）。
+
+至于传递的其他两个参数，`hydrating` 是用于服务端渲染时判断的，`false` 是一个特殊的标记只用于 `<transition-group>`，这两者和 Diff 没关系，暂时就不讨论了。
 
 ```js
 // vue/src/core/instance/lifecycle.js
@@ -178,12 +182,30 @@ Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
   }
 ```
 
+接着我们继续看 `vm.__patch__` 这个函数的定义。在 Web 和在 Weex 上 `vm.__patch__` 的定义是不一样的，这里我们只看在 Web 上的。
 
-createPatchFunction
-Vue.prototype.__patch__ = inBrowser ? patch : noop
-Vue.prototype._update
+```js
+// vue/src/platforms/web/runtime/index.js
+import { patch } from './patch'
+Vue.prototype.__patch__ = inBrowser ? patch : noop  // noop 是一个空函数
+
+// vue/src/platforms/web/runtime/patch.js
+import { createPatchFunction } from 'core/vdom/patch'
+export const patch: Function = createPatchFunction({ nodeOps, modules })
+
+// vue/src/core/vdom/patch.js
+export function createPatchFunction (backend) {
+  return function patch (oldVnode, vnode, hydrating, removeOnly) {
+    ...
+  }
+}
+```
+
+
+
 
 Vue 构造函数：core/instance/index.js
+
 
 ## diff 算法
 
