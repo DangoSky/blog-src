@@ -160,7 +160,7 @@ const builds = {
 
 ## Vue2 Diff 源码分析
 
-现在我们来看 Vue 中和 Diff 相关源码。为了方便阅读，以下摘抄的源码只截取其中重点的部分。
+现在我们来看 Vue 中和 Diff 相关源码。**为了方便阅读，以下摘抄的源码只截取其中重点的部分**。
 
 当初始化渲染、组件更新的时候，Vue 会调用原型上的 `_update` 函数进行 Diff。可以看到，其中主要是通过 `vm.__patch__` 函数进行 Diff、获取修改补丁、更新 DOM 并返回新的真实 DOM 等操作。当页面初始化渲染时，此时 `vm._vnode` 为初始值 [null](https://github.com/vuejs/vue/blob/dev/src/core/instance/render.js#L20)，所以此时的更新操作走 `vm.__patch__(vm.$el, vnode, hydrating, false)`。
 
@@ -170,7 +170,6 @@ const builds = {
 
 ```js
 // vue/src/core/instance/lifecycle.js
-
 Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
   const vm: Component = this
   const prevVnode = vm._vnode
@@ -191,20 +190,58 @@ Vue.prototype.__patch__ = inBrowser ? patch : noop  // noop 是一个空函数
 
 // vue/src/platforms/web/runtime/patch.js
 import { createPatchFunction } from 'core/vdom/patch'
-export const patch: Function = createPatchFunction({ nodeOps, modules })
+export const patch: Function = createPatchFunction()
 
 // vue/src/core/vdom/patch.js
-export function createPatchFunction (backend) {
+export function createPatchFunction() {
   return function patch (oldVnode, vnode, hydrating, removeOnly) {
     ...
   }
 }
 ```
 
+oldVnode 表示旧的虚拟 DOM，vnode 表示新的虚拟 DOM。
 
+可以发现，经过一层层调用，最后 Diff 和页面更新的操作是在这个 `patch` 函数里完成的。现在我们重点来看 `patch` 的源码。
 
+```js
+function patch (oldVnode, vnode) {
+  const isRealElement = isDef(oldVnode.nodeType)
+  if (!isRealElement && sameVnode(oldVnode, vnode)) {
+    patchVnode(oldVnode, vnode)
+  } else {
+    if (isRealElement) {
+      oldVnode = emptyNodeAt(oldVnode)
+    }
+    createElm(vnode)
+    removeVnodes(oldVnode)
+  }
+  return vnode.elm
+}
+```
 
-Vue 构造函数：core/instance/index.js
+其中，`isDef` 函数用于判断当前参数是否等于 `undefined` 或者 `null`，都不等于时 `isDef` 才返回 `true`。
+
+首先它会通过 `isRealElement` 判断旧的虚拟 DOM 即 `oldVnode` 是不是一个真实的 DOM 节点（页面第一次渲染时 `oldVnode` 为真实 DOM 节点，之后更新页面时 `oldVnode` 才为虚拟 DOM），只有 `oldVnode` 为虚拟 DOM 并且新旧两个虚拟 DOM 值得比较时，才会调用 `patchVnode` 函数进行 Diff 和更新。否则就直接根据新的虚拟 DOM 创建真实 DOM 并插入到页面，并移除掉旧的虚拟 DOM（如果 `oldVnode` 为真实 DOM 的话，还需要先调用 `emptyNodeAt` 创建虚拟 DOM）。
+
+理清了页面第一次渲染和页面更新的不同操作后，现在来看看上文的一个疑惑点，什么叫做只有新旧两个虚拟 DOM 值得比较时才会进行 Diff？如何判断两个 VNode 是否值得比较呢？判断的依据主要是三点：key、tag 和 data。key 和 tag 比较容易理解，如果节点的 key 和标签类型都变了，那自然就不用去 Diff 比较子节点变化，需要直接重新创建节点了。至于节点属性 data，我的理解是，比如一个 `Button` 按钮，它的 `disabled` 值改变了的话，这个节点实质上还是同一个，可以复用。而如果两个 VNode 一个有 data 一个没有的话，说明它们不是同一个节点，就需要重新创建了。
+
+除此之外，如果节点是 `input` 输入框的话，还需要它的 `type` 相同才行，这是为了 fix [5266](https://github.com/vuejs/vue/issues/5266) 这个 bug，详情可以看 Github 原贴。
+
+```js
+function sameVnode (a, b) {
+  return (
+    a.key === b.key &&
+    a.tag === b.tag &&
+    a.isComment === b.isComment &&
+    isDef(a.data) === isDef(b.data) &&
+    sameInputType(a, b)
+  )
+}
+```
+
+如果新旧两个 VNode 值得比较的话，就会开始进入 Diff 比较它们子节点的环节。
+
 
 
 ## diff 算法
@@ -236,3 +273,5 @@ diff 算法的优势
 
 
 为什么要设置 key
+
+Vue 构造函数：core/instance/index.js
