@@ -124,9 +124,57 @@ TODO：补充
 
 我们先通过图文来看 Vue 中的 Diff 流程，等理解了之后再来看源码，不然直接看源码的话容易懵 Orz。
 
+当对新旧两个虚拟 DOM 做 Diff 时，Vue 采用的思想是**同级比较**、**深度递归**、**双端遍历**。
+
+#### 同级比较
+
+同级比较指的是只比对两个相同层级的 VNode，如果两者不一样了，就不再去 Diff 它们的子节点，更不会去跨层级比较，而是直接更新它。这是因为在我们平时的操作，很少出现将一个 DOM 节点进行跨层级移动，比如将原来的父节点移动到它子节点的位置上。所以 Diff 算法就没有为这个极少数的情况专门去跨层级 Diff，毕竟为此得不偿失。
+
+**TODO: O(n^3) 优化到 O(n)**
+
+![](1.png)
+
+##### 深度递归
+
+深度递归指的是比较两个虚拟 DOM 时采用深度优先的先序遍历策略，先比较完一个子节点后，就去比较这个子节点的子孙节点，都递归完后再来遍历它的兄弟节点。如下图的一个 DOM 结构，节点的编号就是它们的遍历顺序。
+
+![](2.png)
+
+那么为什么要使用深度优先遍历，广度优先遍历不行么？我的理解是，深度优先遍历使用到的是栈结构，进行深度递归的时候，栈中保存的是当前节点的父元素和祖先元素，栈中存储的最大节点个数就是 DOM 树最大的层级数。而广度优先遍历使用的是队列结构，进行广度递归的时候，队列中保存的是下一层的节点，队列中存储的最大节点个数就是 DOM 树最大的层级节点数。而在通常情况下，一个 DOM 树的层级数是会少于它的层级节点数的（比如一个列表信息组件），所以使用深度优先遍历占用的空间会更小些。
+
+#### 双端比较
+
+双端比较指的是在 Diff 新旧子节点时，使用了四个指针分为四种比较方法（当然还有最后一种通过 key 比较的，这个待会再说）。这四个指针分别是：
+
+- `oldStartIdx` 表示旧 VNode 从左边开始 Diff 的节点，初始值为第一个子节点
+- `oldEndIdx` 表示旧 VNode 从右边开始 Diff 的节点，初始值为最后一个子节点
+- `newStartIdx` 表示新 VNode 从左边开始 Diff 的节点，初始值为第一个子节点
+- `newEndIdx` 表示新 VNode 从右边开始 Diff 的节点，初始值为最后一个子节点
+
+现在我们具体看看如何借助这四个指针和 key 进行 Diff 的。
 
 
+```flow
+graph LR
+  d1((This is the text in the circle))
+```
 
+```flow
+graph TD
+    Start --> Stop
+```
+
+```flow
+st=>start: 开始框
+op=>operation: 处理框
+cond=>condition: 判断框(是或否?)
+sub1=>subroutine: 子流程
+io=>inputoutput: 输入输出框
+e=>end: 结束框
+st->op->cond
+cond(yes)->io->e
+cond(no)->sub1(right)->op
+```
 
 ## 如何调试 Vue 源码
 
@@ -240,7 +288,63 @@ function sameVnode (a, b) {
 }
 ```
 
-如果新旧两个 VNode 值得比较的话，就会开始进入 Diff 比较它们子节点的环节。
+如果新旧两个 VNode 值得比较的话，就会执行 `patchVnode` 开始比较两个 VNode。
+
+```js
+function patchVnode(oldVnode, vnode) {
+  if (oldVnode === vnode) {
+    return
+  }
+  const elm = vnode.elm = oldVnode.elm
+  const oldCh = oldVnode.children
+  const ch = vnode.children
+
+  if (isUndef(vnode.text)) {
+    if (isDef(oldCh) && isDef(ch)) {
+      if (oldCh !== ch) {
+        updateChildren(elm, oldCh, ch)
+      }
+    } else if (isDef(ch)) {
+      if (isDef(oldVnode.text)) {
+        setTextContent(elm, '')
+      }
+      addVnodes(elm)
+    } else if (isDef(oldCh)) {
+      removeVnodes(oldCh, 0, oldCh.length - 1)
+    } else if (isDef(oldVnode.text)) {
+      setTextContent(elm, '')
+    }
+  } else if (oldVnode.text !== vnode.text) {
+    setTextContent(elm, vnode.text)
+  }
+}
+```
+
+vnode 表示新的虚拟 DOM 节点。
+
+oldVnode 表示旧的虚拟 DOM 节点。
+
+ch 表示 vnode 的子节点。
+
+oldCh 表示 oldVnode 的子节点。
+
+
+`patchVnode` 进行的操作是，先判断新旧两个 VNode 是否一样，如果是同一个的话，则说明它没有变化可以直接结束比较了。如果两者不相等的话，则分为以下几种情况讨论：
+
+1. vnode 是文本节点时，那么 oldVnode 也是文本节点，若两者的文本内容不相等，则修改节点的文本（如果一个 VNode 的 `text` 属性不为 `undefined` 的话，就说明它是文本节点）。
+
+2. vnode 不是文本节点时，进一步判断 vnode 和 oldVnode 的子节点情况：
+
+  1. vnode 和 oldVnode 的子节点都存在且不相等，调用 `updateChildren` 开始 Diff 算法比较子节点的差异。
+
+  2. vnode 的子节点存在而 oldVnode 的不存在，说明此时的节点操作是新增，直接创建 vnode 的子节点并插入页面。 **TODO：进一步解释，文本节点**
+
+  3. oldVnode 的子节点存在而 vnode 的不存在，说明此时的节点操作是删除，直接删除 vnode 的子节点。
+
+  4. **TODO：进一步解释，文本节点**
+
+这几个都比较容易理解，现在我们正式进入 Diff 的环节，也就是 `updateChildren` 函数。
+
 
 
 
@@ -252,19 +356,38 @@ function sameVnode (a, b) {
   - 同级相同节点位置变了可以复用（通过 key 来复用）。
 
 
+```flow
+st=>start: 开始
+e=>end: 结束
+op=>operation: 操作
+sub=>subroutine: 子程序
+cond=>condition: 是或者不是?
+io=>inputoutput: 输出
 
-createKeyToOldIdx: 返回一个 map，以 key 为键，数组下标为值
+st(right)->op->cond
+cond(yes)->io(right)->e
+cond(no)->sub(right)->op
+​```
 
+```flow
+st=>start: 开始
+e=>end: 结束
+op=>operation: 我的操作
+cond=>condition: 确认？
+
+st->op->cond
+cond(yes)->e
+cond(no)->op
+```
 
 ## FAQ
 
-1. 为什么使用深度优先遍历而不是广度优先遍历？
-
-深度遍历使用到的是栈结构，深度遍历的时候，栈中保留的是当前节点的父元素和祖先元素，栈中存储的节点数就是树的深度值，占用的空间比较少。而广度遍历使用的是队列结构，广度遍历按树的层级来遍历，队列中保存的是下一层的节点，数量是树的广度值，占用的空间会更大。
 
 2. diff 算法时间复杂度如何从 O(n^3) 优化到 O(n)？
 
 原来的 diff 算法，是将旧虚拟 DOM 的每个节点和新虚拟 DOM 的每个节点进行比较，这就已经有 O(n^2) 了。但考虑到实际应用中跨层级的 DOM 节点改变很少，所以现在的 diff 算法只是比较同层级的节点，也就下降到了 O(n)。
+
+嵌套两层 for 循环，加一层移动
 
 3. 为什么要使用双端比较法？
 
