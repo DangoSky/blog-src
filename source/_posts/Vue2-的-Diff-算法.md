@@ -151,30 +151,11 @@ TODO：补充
 - `newStartIdx` 表示新 VNode 从左边开始 Diff 的节点，初始值为第一个子节点
 - `newEndIdx` 表示新 VNode 从右边开始 Diff 的节点，初始值为最后一个子节点
 
-现在我们具体看看如何借助这四个指针和 key 进行 Diff 的。
+现在我们具体看看如何借助这四个指针和 key 进行 Diff 。以下图所示的新旧虚拟 DOM 作为例子，假设旧 VNode 有 a、b、d、e 四个子节点，页面经过某次更新后，新 VNode 的子节点是 a、c、d、b。要说明的是，图中的节点编号为它们各自的 key，并且排列的顺序是按照它们在真实 DOM 中的顺序来的。
 
+![](3.png)
 
-```flow
-graph LR
-  d1((This is the text in the circle))
-```
-
-```flow
-graph TD
-    Start --> Stop
-```
-
-```flow
-st=>start: 开始框
-op=>operation: 处理框
-cond=>condition: 判断框(是或否?)
-sub1=>subroutine: 子流程
-io=>inputoutput: 输入输出框
-e=>end: 结束框
-st->op->cond
-cond(yes)->io->e
-cond(no)->sub1(right)->op
-```
+DOM 节点的变化无外乎是改变文本、改变节点属性、节点增删移动这几种情况。我们可以先通过上图来推测这次页面更新对该节点的操作：对 a 不做任何改动或是修改了文本或属性，对 b 做了移动操作、
 
 ## 如何调试 Vue 源码
 
