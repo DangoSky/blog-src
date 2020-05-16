@@ -126,7 +126,7 @@ TODO：补充
 
 当对新旧两个虚拟 DOM 做 Diff 时，Vue 采用的思想是**同级比较**、**深度递归**、**双端遍历**。
 
-#### 同级比较
+### 同级比较
 
 同级比较指的是只比对两个相同层级的 VNode，如果两者不一样了，就不再去 Diff 它们的子节点，更不会去跨层级比较，而是直接更新它。这是因为在我们平时的操作，很少出现将一个 DOM 节点进行跨层级移动，比如将原来的父节点移动到它子节点的位置上。所以 Diff 算法就没有为这个极少数的情况专门去跨层级 Diff，毕竟为此得不偿失。
 
@@ -134,7 +134,7 @@ TODO：补充
 
 ![](1.png)
 
-#### 深度递归
+### 深度递归
 
 深度递归指的是比较两个虚拟 DOM 时采用深度优先的先序遍历策略，先比较完一个子节点后，就去比较这个子节点的子孙节点，都递归完后再来遍历它的兄弟节点。如下图的一个 DOM 结构，节点的编号就是它们的遍历顺序。
 
@@ -142,7 +142,7 @@ TODO：补充
 
 那么为什么要使用深度优先遍历，广度优先遍历不行么？我的理解是，深度优先遍历使用到的是栈结构，进行深度递归的时候，栈中保存的是当前节点的父元素和祖先元素，栈中存储的最大节点个数就是 DOM 树最大的层级数。而广度优先遍历使用的是队列结构，进行广度递归的时候，队列中保存的是下一层的节点，队列中存储的最大节点个数就是 DOM 树最大的层级节点数。而在通常情况下，一个 DOM 树的层级数是会少于它的层级节点数的（比如一个列表信息组件），所以使用深度优先遍历占用的空间会更小些。
 
-#### 双端比较
+### 双端比较
 
 双端比较指的是在 Diff 新旧子节点时，使用了四个指针分为四种比较方法（当然还有最后一种通过 key 比较的，这个待会再说）。这四个指针分别是：
 
@@ -183,18 +183,37 @@ DOM 节点的变化无外乎是改变文本、改变节点属性、节点增删�
 
 ![](6.png)
 
-4. 首首比较 e 和 c、尾尾比较 e 和 c、首尾比较 e 和 c、尾首比较 e 和 c，两者都不匹配，于是进入到查找 key 的环节。这里查找 key 有两种方法，一是以旧子节点的 key 为键，它的索引下标为值建立一个 Map，在该 Map 里查找是否存在 `newStartIdx` 也就是 c 节点的 key。找不到的话就再用第二种方法，即遍历旧子节点列表，去一个个判断 key 是和 c 节点的 key 相等。如果通过这两种方法能找到相等的 key 节点的话，则递归比较两者的子节点并在真实 DOM 中移动节点。而在这个栗子中上述两种方法都没能在旧子节点列表里找到 key 为 c 的节点。
+4. 首首比较 e 和 c、尾尾比较 e 和 c、首尾比较 e 和 c、尾首比较 e 和 c，两者都不匹配，于是进入到查找 key 的环节。这里查找 key 有两种方法，一是以旧子节点的 key 为键，它的索引下标为值建立一个映射对象，在该映射对象里直接查找是否存在 `newStartIdx` 也就是 c 节点的 key。找不到的话就再用第二种方法，即遍历旧子节点列表，去一个个判断 key 是和 c 节点的 key 相等。如果通过这两种方法能找到相等的 key 节点的话，则判断两者是否值得比较，是的话就递归比较两者的子节点并在真实 DOM 中移动节点。而在这个栗子中上述两种方法都没能在旧子节点列表里找到 key 为 c 的节点，于是创建节点 c 并插入到 `newStartIdx` 的位置上。因为在旧 VNode 中没有找到匹配的节点，所以旧 VNode 的指针不需要移动，只需要右移新 VNode 的指针。指针移动后现在的状态图如下。
+
+![](7.png)
+
+5. 可以看到，在新 VNode 中 `newStartIdx` 已经大于 `newEndIdx`，也就是已经遍历完新 VNode 了。只要新 VNode 或是旧 VNode 遍历完了，就不能再比对新旧 VNode 了，而是要进行删除或增加操作。
+  - 如果是旧 VNode 先遍历完，也就是新 VNode 中还有几个节点没有在旧 VNode 中匹配到，说明这几个节点是新增加的。这时候需要将 `newStartIdx` 至 `newEndIdx` 之间的节点都创建出新节点，并插入到相应的位置上。
+  - 如果是新 VNode 先遍历完，也就是旧 VNode 中还有几个节点没有在新 VNode 中匹配到，说明这几个节点是被删除了的，这时候需要在真实 DOM 中移除掉 `oldStartIdx` 至 `oldEndIdx` 之间的节点。比如本栗子，就需要移除掉节点 e。
 
 
+OK，Diff 的流程到这里就结束了。读者可以再理一遍这个双端比较的过程，看完之后看看能不能发现什么疑惑点。我看的时候有以下几个疑惑点：
 
-1. `oldStartIdx` 和 `newStartIdx` 首首比较。
+##### 疑惑一：双端比较中为什么要尾尾比较？
 
-2. `oldEndIdx` 和 `newEndIdx` 尾尾比较。
+我的理解是，**尾尾比较是为了加速比对时的命中率，提高 Diff 效率**。比如现在有旧子节点列表 a b c，新子节点列表 b a c（偷个懒，这里就不画图啦）。如果没有尾尾比较的话，那它的第一次 Diff 比较顺序是：a 和 b、a 和 c、c 和 b、通过 key 比较。可以看到，这第一次 Diff 得通过 key 才能找到两个匹配的 VNode。而有尾尾比较的话，第一次 Diff 的比较顺序就变成了：a 和 b、c 和 c，至此就可以找到匹配的节点了，包括之后的两次 Diff 都不需要通过 key 比较。所以通过尾尾比较是可以提高 Diff 命中率的话。
 
-3. `oldStartIdx` 和 `newEndIdx` 首尾比较。
 
-4. `oldEndIdx` 和 `newStartIdx` 尾首比较。
+##### 疑惑二：双端比较中为什么要首尾比较和尾首比较？
 
+我的理解是，**首尾比较和尾首比较同样是为了提高 Diff 效率**。比如现在有旧子节点列表 a b c，新子节点列表 b c a，在这里的更新操作只是把 a 节点移动到了尾部，其他的 b 和 c 节点都没有变动。如果没有首尾比较的话，它的 Diff 比较顺序是：a 和 b、c 和 a、c 和 b、通过 key 比较。还是一样得通过 key 比较才能匹配到，而且之后还需要两次 Diff 并且依旧是通过 key 才能完成本次更新的 Diff 过程。如果有首尾比较的话，它的比较顺序就成了 a 和 b、c 和 a、a 和 a，匹配上后移动指针，发现剩下的 b c 节点都是相同的，都不需要再有多余的比对操作了。这样是不是大大提高了 Diff 的效率？尾首比较也是同理。
+
+
+##### 疑惑三：使用 Vue 时我们常常会给节点赋予一个独一无二的 key，通过双端比较的过程能不能明白这是为什么？
+
+我的理解是，如果我们编码时没有给节点一个 key 的话，它在上述五种比较方法都匹配不到后就会直接创建新的真实 DOM 节点并插入到相应位置。而创建一个真实 DOM 节点其实消耗是挺大的，看下图可以发现，我们创建一个 `div` 节点，它的初始属性都有 293 个。所以在能复用原 DOM 节点的时候就应该尽量复用，而不是重新创建。
+
+![](8.png)
+
+Diff 过程几种方法中，消耗最大的是重新创建 DOM 节点，其次是通过 key 比较，最好的首首/尾尾/首尾/尾首比较。那么为啥说首首比较这四种方法要优于通过 key 比较呢？不要忘了，通过 key 比较，不管是通过对象直接找到对应的 key，还是通过遍历一个个去找，它们都得先遍历一边旧子节点列表（第二种方法可能还不止遍历一次），而且通过对象直接找还得花费 O(n) 的空间复杂度。所以综合起来通过首首比较这四种方法进行比对，还是要优于通过 key 比对的。
+
+
+我们先通过上述图文的形式理解 Diff 流程（也就是那十二个字，同级比较、深度递归、双端比较），并且也明白其中的几个疑惑点后，下面再来看具体源码就很容易理解了~
 
 ## 如何调试 Vue 源码
 
@@ -294,7 +313,7 @@ function patch (oldVnode, vnode) {
 
 理清了页面第一次渲染和页面更新的不同操作后，现在来看看上文的一个疑惑点，什么叫做只有新旧两个虚拟 DOM 值得比较时才会进行 Diff？如何判断两个 VNode 是否值得比较呢？判断的依据主要是三点：key、tag 和 data。key 和 tag 比较容易理解，如果节点的 key 和标签类型都变了，那自然就不用去 Diff 比较子节点变化，需要直接重新创建节点了。至于节点属性 data，我的理解是，比如一个 `Button` 按钮，它的 `disabled` 值改变了的话，这个节点实质上还是同一个，可以复用。而如果两个 VNode 一个有 data 一个没有的话，说明它们不是同一个节点，就需要重新创建了。
 
-除此之外，如果节点是 `input` 输入框的话，还需要它的 `type` 相同才行，这是为了 fix [5266](https://github.com/vuejs/vue/issues/5266) 这个 bug，详情可以看 Github 原贴。
+除此之外，如果节点是 `input` 输入框的话，还需要它的 `type` 相同才行，这是为了修复 [5266](https://github.com/vuejs/vue/issues/5266) 这个 bug，详情可以看 Github 原贴。
 
 ```js
 function sameVnode (a, b) {
@@ -348,6 +367,8 @@ ch 表示 vnode 的子节点。
 
 oldCh 表示 oldVnode 的子节点。
 
+`isUndef` 函数判断参数是否为 `undefined` 或 `null`，是的话则返回 true。
+
 
 `patchVnode` 进行的操作是，先判断新旧两个 VNode 是否一样，如果是同一个的话，则说明它没有变化可以直接结束比较了。如果两者不相等的话，则分为以下几种情况讨论：
 
@@ -365,42 +386,103 @@ oldCh 表示 oldVnode 的子节点。
 
 这几个都比较容易理解，现在我们正式进入 Diff 的环节，也就是 `updateChildren` 函数。
 
+```js
+function updateChildren (parentElm, oldCh, newCh) {
+  let oldStartIdx = 0
+  let newStartIdx = 0
+  let oldEndIdx = oldCh.length - 1
+  let oldStartVnode = oldCh[0]
+  let oldEndVnode = oldCh[oldEndIdx]
+  let newEndIdx = newCh.length - 1
+  let newStartVnode = newCh[0]
+  let newEndVnode = newCh[newEndIdx]
+  let oldKeyToIdx, idxInOld, vnodeToMove
 
-
-
-## diff 算法
-
-- diff 算法的优化：
-  - 深度遍历。
-  - 同级比对，只比较新旧虚拟 DOM 中同个层级的节点。
-  - 同级相同节点位置变了可以复用（通过 key 来复用）。
-
-
-```flow
-st=>start: 开始
-e=>end: 结束
-op=>operation: 操作
-sub=>subroutine: 子程序
-cond=>condition: 是或者不是?
-io=>inputoutput: 输出
-
-st(right)->op->cond
-cond(yes)->io(right)->e
-cond(no)->sub(right)->op
-​```
-
-```flow
-st=>start: 开始
-e=>end: 结束
-op=>operation: 我的操作
-cond=>condition: 确认？
-
-st->op->cond
-cond(yes)->e
-cond(no)->op
+  while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
+    if (isUndef(oldStartVnode)) {
+      oldStartVnode = oldCh[++oldStartIdx]
+    } else if (isUndef(oldEndVnode)) {
+      oldEndVnode = oldCh[--oldEndIdx]
+    } else if (sameVnode(oldStartVnode, newStartVnode)) {
+      patchVnode(oldStartVnode, newStartVnode)
+      oldStartVnode = oldCh[++oldStartIdx]
+      newStartVnode = newCh[++newStartIdx]
+    } else if (sameVnode(oldEndVnode, newEndVnode)) {
+      patchVnode(oldEndVnode, newEndVnode)
+      oldEndVnode = oldCh[--oldEndIdx]
+      newEndVnode = newCh[--newEndIdx]
+    } else if (sameVnode(oldStartVnode, newEndVnode)) {
+      patchVnode(oldStartVnode, newEndVnode)
+      insertBefore(parentElm, oldStartVnode.elm, nextSibling(oldEndVnode.elm))
+      oldStartVnode = oldCh[++oldStartIdx]
+      newEndVnode = newCh[--newEndIdx]
+    } else if (sameVnode(oldEndVnode, newStartVnode)) {
+      patchVnode(oldEndVnode, newStartVnode)
+      insertBefore(parentElm, oldEndVnode.elm, oldStartVnode.elm)
+      oldEndVnode = oldCh[--oldEndIdx]
+      newStartVnode = newCh[++newStartIdx]
+    } else {
+      if (isUndef(oldKeyToIdx)) {
+        oldKeyToIdx = createKeyToOldIdx(oldCh, oldStartIdx, oldEndIdx)
+      }
+      idxInOld = isDef(newStartVnode.key)
+        ? oldKeyToIdx[newStartVnode.key]
+        : findIdxInOld(newStartVnode, oldCh, oldStartIdx, oldEndIdx)
+      if (isUndef(idxInOld)) {
+        createElm(newStartVnode)
+      } else {
+        vnodeToMove = oldCh[idxInOld]
+        if (sameVnode(vnodeToMove, newStartVnode)) {
+          patchVnode(vnodeToMove, newStartVnode)
+          oldCh[idxInOld] = undefined
+          insertBefore(parentElm, vnodeToMove.elm, oldStartVnode.elm)
+        } else {
+          createElm(newStartVnode)
+        }
+      }
+      newStartVnode = newCh[++newStartIdx]
+    }
+  }
+  if (oldStartIdx > oldEndIdx) {
+    addVnodes(parentElm, newStartIdx, newEndIdx)
+  } else if (newStartIdx > newEndIdx) {
+    removeVnodes(oldCh, oldStartIdx, oldEndIdx)
+  }
+}
 ```
 
-## FAQ
+如上文图文解说双端比较的流程部分，只要理解了过程再看 `updateChildren` 函数就没什么难度了。这里也不再多解释这段源码，就只说说通过 key 比较的部分，里面涉及到了几个新函数。如上文说通过 key 比较有两种方法，一是建立 key 和索引下标的映射对象，二是遍历旧子节点一个个比较 key 是否相等。第一方法对应的是 `createKeyToOldIdx` 函数，如果在映射对象里找不到的话再去遍历，也就是 `findIdxInOld` 函数。
+
+```js
+function createKeyToOldIdx (children, beginIdx, endIdx) {
+  let i, key
+  const map = {}
+  for (i = beginIdx; i <= endIdx; ++i) {
+    key = children[i].key
+    if (isDef(key)) {
+      map[key] = i
+    }
+  }
+  return map
+}
+
+function findIdxInOld (node, oldCh, start, end) {
+  for (let i = start; i < end; i++) {
+    const c = oldCh[i]
+    if (isDef(c) && sameVnode(node, c)) {
+      return i
+    }
+  }
+}
+```
+
+需要注意的是 `oldCh[idxInOld] = undefined` 这个操作，如果在旧子节点中找到有和 `newStartVnode` 的 key 相等的旧子节点，还需要把这个 VNode 置为 `undefined`。这是因为通过 key 比较后旧 VNode 的指针并没有移动，这个旧 VNode 如果和 `newStartVnode` 匹配后没有置为 `undefined`，那么在后续的比对过程中可能和其他的新 VNode 匹配上。所以为了避免影响到后续的 Diff 操作，需要将它赋值为 `undefined` 表示这个节点已经匹配过了。
+
+
+---
+
+---
+
 
 
 2. diff 算法时间复杂度如何从 O(n^3) 优化到 O(n)？
@@ -409,12 +491,3 @@ cond(no)->op
 
 嵌套两层 for 循环，加一层移动
 
-3. 为什么要使用双端比较法？
-
-
-diff 算法的优势
-
-
-为什么要设置 key
-
-Vue 构造函数：core/instance/index.js
