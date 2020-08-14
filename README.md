@@ -3,6 +3,8 @@
 ## 常用命令
 
 ```bash
+# 本机没安装 hexo 的话，需要先 npm install -g hexo 全局安装下
+
 yarn 
 
 hexo new <文章名>
@@ -27,6 +29,6 @@ changeRandomImg：使用 themes/hexo-theme-matery/source/medias/featureimages/ �
 img：通过 url 指定图片。
 ```
 
+## 常见问题
 
-
-
+1. 构建部署时报 `FATAL Something's wrong. Maybe you can find the solution here: https://hexo.io/docs/troubleshooting.html; TypeError [ERR_INVALID_ARG_TYPE]: The "mode" argument must be integer. Received an instance of Object` 的错误。原因是 [Hexo 不支持 Node14+](https://github.com/hexojs/hexo/issues/4263)，需要降低 Node 版本才行。
