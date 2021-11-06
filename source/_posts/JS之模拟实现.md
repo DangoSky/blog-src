@@ -324,11 +324,11 @@ var obj = {a:1, arr: [{t: 1}, {t: 2}], b: null, c: undefined};
 let obj1 = JSON.parse(JSON.stringify(obj));
 ```
 
-> 至于这两种方法的不足，请看[我的另一篇文章](http://blog.dangosky.com/2019/04/01/%E6%B7%B1%E6%8B%B7%E8%B4%9D%E5%AE%9E%E7%8E%B0/) 介绍。
+> 至于这两种方法的不足，请看[我的另一篇文章](https://dangosky.github.io/blog/2019/04/01/%E6%B7%B1%E6%8B%B7%E8%B4%9D%E5%AE%9E%E7%8E%B0/) 介绍。
 
 # 优化版深拷贝
 
-> 优化方向和思路还是参考[我的另一篇文章](http://blog.dangosky.com/2019/04/01/%E6%B7%B1%E6%8B%B7%E8%B4%9D%E5%AE%9E%E7%8E%B0/#toc-heading-6) 介绍。
+> 优化方向和思路还是参考[我的另一篇文章](https://dangosky.github.io/blog/2019/04/01/%E6%B7%B1%E6%8B%B7%E8%B4%9D%E5%AE%9E%E7%8E%B0/#toc-heading-6) 介绍。
 
 ```js
 function deepCopy(obj, map = new WeakMap()) {

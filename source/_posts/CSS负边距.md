@@ -321,7 +321,7 @@ changeRandomImg: 16
 &emsp;&emsp;这应用是家常便饭了，就不赘述了。
 
 ### 实现多列等高，双飞翼布局等
-&emsp;&emsp;实现原理和上面的两栏布局差不多，具体的实现请[戳这里](http://blog.dangosky.com/%2F2019%2F03%2F07%2F%E6%9C%AA%E7%9F%A5%E5%AE%BD%E9%AB%98%E5%85%83%E7%B4%A0%E7%9A%84%E6%B0%B4%E5%B9%B3%E5%9E%82%E7%9B%B4%E5%B1%85%E4%B8%AD%E5%B8%83%E5%B1%80%2F#toc-heading-5)。
+&emsp;&emsp;实现原理和上面的两栏布局差不多，具体的实现请[戳这里](https://dangosky.github.io/blog/%2F2019%2F03%2F07%2F%E6%9C%AA%E7%9F%A5%E5%AE%BD%E9%AB%98%E5%85%83%E7%B4%A0%E7%9A%84%E6%B0%B4%E5%B9%B3%E5%9E%82%E7%9B%B4%E5%B1%85%E4%B8%AD%E5%B8%83%E5%B1%80%2F#toc-heading-5)。
 
 # BFC
 &emsp;&emsp;块级格式化上下文（Block Formatting Context，BFC），我的理解是：BFC 就是具有特定规则的一个容器，而且容器里面的元素不会在布局上影响到外面的元素。即不同的 BFC 区域之间是各自独立互不影响的。这里说的特定规则即下文要说到的垂直方向上 marin 会合并、子元素的 margin-top 会带跑父元素等。
